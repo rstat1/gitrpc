@@ -12,5 +12,11 @@ executable("nexus_git") {
     ]
     sources = [
         "main.cpp",
+        "app/App.h",
+        "app/AppImpl.h",
+        "app/AppImpl.cpp",
+        "GitServiceImpl.h",
+        "GitServiceImpl.cpp",
+        "common/GitServiceCommon.h",
     ]
 }

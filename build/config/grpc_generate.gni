@@ -1,0 +1,35 @@
+template("protobuf_generate") {
+    for_grpc = invoker.for_grpc
+    service_name = target_name
+    if (target_os == "steamlink") {
+        assert(for_grpc == false, "grpc not (yet) supported in steamlink builds")
+    }
+    action("${target_name}_generate") {
+        script = "//build/run-protoc.py"
+        sources = [ "//src/protocols/${service_name}.proto" ]
+        outputs = [
+            "$target_out_dir/${service_name}.pb.h",
+            "$target_out_dir/${service_name}.pb.cc",
+        ]
+        if (for_grpc) {
+            outputs += [
+                "$target_out_dir/${service_name}.grpc.pb.h",
+                "$target_out_dir/${service_name}.grpc.pb.cc"
+            ]
+        }
+        args = [
+            rebase_path("//", root_build_dir),
+            rebase_path("//src/protocols/generated", root_build_dir),
+            rebase_path(target_out_dir, root_build_dir),
+        ] + rebase_path(sources, root_build_dir)
+        if (for_grpc) {
+            args += ["grpc"]
+        }
+    }
+    source_set("${target_name}") {
+        include_dirs = [ "../../external" ]
+        deps = [ ":${target_name}_generate" ]
+        public_configs = [ "//build/config:protobuf_common" ]
+        sources = get_target_outputs(":${target_name}_generate")
+    }
+}

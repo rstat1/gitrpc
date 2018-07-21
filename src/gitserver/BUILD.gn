@@ -1,0 +1,16 @@
+executable("nexus_git") {
+    deps = [
+        "//src/base:base",
+        "//external:external",
+        "//src/protocols:GitService",
+        "//build/config/sanitizers:deps",
+        "//src/protocols:RepoInfoService",
+    ]
+    configs += [
+        "//build/config:common",
+        "//build/config:linux_flags",
+    ]
+    sources = [
+        "main.cpp",
+    ]
+}

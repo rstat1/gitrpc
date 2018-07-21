@@ -1,0 +1,6 @@
+protobuf_generate("GitService") {
+    for_grpc = true
+}
+protobuf_generate("RepoInfoService") {
+    for_grpc = true
+}

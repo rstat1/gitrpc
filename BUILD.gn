@@ -1,0 +1,20 @@
+group("libs") {
+    deps = [
+        "//src/base:base",
+        "//external:external"
+    ]
+}
+group("apps") {
+    deps = [
+        "//src/gitserver:nexus_git"
+    ]
+    # if (is_steamlink == true) {
+    #     deps = [
+    #         "//src/client:transcode_client",
+    #     ]
+    # } else {
+    #     deps = [
+    #         "//src/server:transcode_server"
+    #     ]
+    # }
+}

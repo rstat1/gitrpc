@@ -1,0 +1,20 @@
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+**/monologue.txt
+**/armite-log.txt
+external/libs/*
+**/out-*/**
+*.ninja
+*.zip
+**/syms/**
+\.directory
+src/BuildInfo.h
+\.vscode/cquery_cached_index/
+*.pyc
+compile_commands.json
+**/external/cpr.ninja
+**/transcode/transcode_server.ninja
+build.sh
+generated/**

@@ -1,0 +1,34 @@
+syntax = "proto3";
+package nexus;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service RepoInfoService {
+    rpc GetCommit(GetCommitRequest) returns (GetCommitResponse) {}
+    rpc GetCommits(GetCommitsRequest) returns (GetCommitsResponse) {}
+    rpc GetKnownRepos(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message Commit {
+    string author = 1;
+    string message = 2;
+    string hash = 3;
+    bytes body = 4;
+    google.protobuf.Timestamp date = 5;
+
+}
+message GetCommitRequest {
+    string hash = 1;
+}
+
+message GetCommitResponse {
+    Commit commit = 1;
+}
+
+message GetCommitsRequest {
+    string repoName = 1;
+}
+message GetCommitsResponse {
+    repeated Commit commits = 1;
+}

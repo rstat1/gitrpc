@@ -1,0 +1,21 @@
+/*
+* Copyright (c) ##YEAR## An Incredibly Big Red Robot
+*
+* Use of this source code is governed by a "BSD-style" license that can be
+* found in the included LICENSE file.
+*/
+
+#ifndef BRANCHNFO
+#define BRANCHNFO
+
+namespace ##ROOT_NAMESPACE##
+{
+	#define BRANCH "##BRANCHNAME##"
+	#define BUILDNUMBER "##BUILD##"
+	#define CLIENTID "##CLIENT_ID##"
+	#define CLIENTKEY "##CLIENT_KEY##"
+	#define SERVICE_URL_PREFIX "##URL_PREFIX##"
+	#define WEBSOCKET_URL_PREFIX "##WS_URL##"
+}
+
+#endif

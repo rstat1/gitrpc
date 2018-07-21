@@ -1,0 +1,48 @@
+shared_library("base") {
+    deps = ["//build/config/sanitizers:deps"]
+    configs += [ "//build/config:common" ]
+    cflags_cc = [
+      "-fPIC"
+    ]
+    configs += [ "//build/config:linux_flags" ]
+    deps += [ "//src/base/platform/linux:base_linux" ]
+    libs = [
+       "../../external/libs/linux/$target_cpu/libboost_system.a",
+       "../../external/libs/linux/$target_cpu/libboost_filesystem.a"
+    ]
+    sources = [
+        "Utils.cpp",
+        "base64.cpp",
+        "logging.cpp",
+        "app/app_base.cpp",
+        "events/EventHub.cpp",
+        "threading/Thread.cpp",
+        "threading/TaskRunner.cpp",
+        "threading/IOWorkerThread.cpp",
+        "threading/dispatcher/Dispatcher.cpp",
+    ]
+    public = [
+        "Utils.h",
+        "common.h",
+        "base64.h",
+        "logging.h",
+        "app/app_base.h",
+        "base_exports.h",
+        "ipc/IPCChannel.h",
+        "events/EventHub.h",
+        "ipc/PlatformPipe.h",
+        "threading/common/Thread.h",
+        "threading/common/IOTasks.h",
+        "threading/common/TaskRunner.h",
+        "threading/common/thread_types.h",
+        "threading/tls/ThreadLocalTypes.h",
+        "threading/dispatcher/Dispatcher.h",
+        "threading/common/PlatformThread.h",
+        "threading/common/IOWorkerThread.h",
+        "threading/dispatcher/MessagePump.h",
+        "threading/tls/ThreadLocalStorage.h",
+        "threading/common/ConditionVariable.h",
+        "threading/dispatcher/DispatcherTypes.h",
+        "threading/dispatcher/DispatcherMessagePump.h",
+    ]
+}

@@ -1,0 +1,16 @@
+component("external") {
+    include_dirs = [
+        "jsoncpp/",
+    ]
+    sources = [
+        "jsoncpp/jsoncpp.cpp",
+        "jsoncpp/json/json.h",
+    ]
+    libs = [
+        "z",
+        "gnutls",
+    ]
+    if (is_linux) {
+        configs = [ "//build/config:linux_flags" ]
+    }
+}

@@ -1,0 +1,18 @@
+component("base_linux") {
+    configs = [
+        "//build/config:common",
+        "//build/config:linux_flags"
+    ]
+    cflags = [
+        "-fPIC"
+    ]
+    sources = [
+        "ipc/PlatformPipePosix.cpp",
+        "threading/PlatformThreadPosix.cpp",
+        "threading/ConditionVariablePosix.cpp",
+        # "threading/ThreadLocalStoragePosix.cpp",
+        "dispatcher/MessagePumpEPoll.cpp",
+        "dispatcher/include/MessagePumpEPoll.h",
+        "dispatcher/include/DispatcherTypesLinux.h",
+    ]
+}

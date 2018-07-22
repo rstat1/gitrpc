@@ -24,6 +24,8 @@ template("protobuf_generate") {
         ] + rebase_path(sources, root_build_dir)
         if (for_grpc) {
             args += ["grpc"]
+        } else {
+            args += ["not_grpc"]
         }
     }
     source_set("${target_name}") {

@@ -12,10 +12,10 @@ from datetime import datetime, date
 from shutil import make_archive, rmtree
 from distutils.dir_util import copy_tree
 
-global arch, ClientID, ClientKey, URLPrefix, WSURLPrefix
+global arch, ClientID, ClientKey, URLPrefix, WSURLPrefix, currentOS, binDeps, projectName
+global startMonth, startDay, startYear
 
 path = os.path.abspath(os.path.split(__file__)[0])
-currentOS = ""
 outputDir = ""
 
 #TODO: Switch from dev to prod with a cmdline switch?
@@ -26,12 +26,26 @@ ClientKey = ""
 URLPrefix = ""
 WSURLPrefix = ""
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 if (os.path.isdir(os.getcwd() + "/external") == False):
         print "Please execute this script from the root of your source tree."
         exit(1)
 
+if (os.path.exists(os.getcwd() + '/project_config.json') == False):
+        print "Missing project_config.json file. Please create one and try again."
+        exit(1)
+
 def InitBuildEnv():
-        global buildDir, arch
+        global buildDir, arch, currentOS, ClientID, ClientKey, URLPrefix, WSURLPrefix
         GNCmd = "build/gn gen "
         buildDir = os.getcwd()
         if os.environ.has_key("TARGET_ARCH"):
@@ -46,15 +60,35 @@ def InitBuildEnv():
         elif platform.system() == "Windows":
                 currentOS = "win"
         GNCmd += "out-" + arch
+        ReadBuildConfig()
+        PrintMessage("Building " + projectName, False)
         subprocess.check_call(GNCmd, shell=True)
-        if os.path.exists('build/service-details.json'):
-                with open('build/service-details.json', 'r') as details:
-                        info = json.loads(details)
+        if os.path.exists(os.getcwd() + '/service-details.json'):
+                with open(os.getcwd() + '/service-details.json', 'r') as details:
+                        info = json.load(details)
                         ClientID = info["ClientID"]
                         ClientKey = info["ClientKey"]
                         URLPrefix = info["URLPrefix"]
                         WSURLPrefix = info["WSURLPrefix"]
-                        rootNamespace = info["RootNamespace"]
+
+def PrintMessage(msg, newLineBefore):
+        if newLineBefore:
+                print ''
+        print bcolors.OKGREEN + "==========================="
+        print msg
+        print '==========================='
+        print bcolors.ENDC
+
+def ReadBuildConfig():
+        global binDeps, startYear, startDay, startMonth, rootNamespace, projectName
+        with open(os.getcwd() + '/project_config.json', 'r') as details:
+                config = json.load(details)
+                binDeps = config["bindeps"][currentOS]
+                rootNamespace = config["namespace"]
+                startYear = config["start_date"]["year"]
+                startDay = config["start_date"]["day"]
+                startMonth = config["start_date"]["month"]
+                projectName = unicode.encode(config["name"])
 
 
 def WriteARMGNFlags():
@@ -90,7 +124,7 @@ def WriteX64GNFlags():
                 argsFile.write('is_clang = true')
 
 def GetServiceDetails():
-        global ClientID, ClientKey, URLPrefix, WSURLPrefix
+        global ClientID, ClientKey, URLPrefix, WSURLPrefix, rootNamespace
         if os.environ.has_key("CLIENT_ID"):
                 ClientID = os.environ["CLIENT_ID"]
         if os.environ.has_key("CLIENT_KEY"):
@@ -140,7 +174,7 @@ def GenerateCompileCommands():
 
 def GenerateBuildInfo():
         now = datetime.now()
-        d1 = date(2018, 07, 20)
+        d1 = date(startYear, startMonth, startDay)
         d0 = date.today()
 
         delta = d0 - d1
@@ -161,9 +195,30 @@ def GenerateBuildInfo():
         with open("out-"+arch+"/VERSION", 'w+') as verInfo:
                 verInfo.write(version)
 
+def CopyDeps():
+        if binDeps != None:
+                libArch = ""
+                srcPaths = []
+                dstPaths = []
+                if arch == "x86_64":
+                        libArch = "x64"
+                else:
+                        libArch = "arm"
+                srcPathPrefix = os.getcwd() + "/external/libs/linux/" + libArch + "/"
+                dstPathPrefix = os.getcwd() + "/out-" + arch + "/"
+                for lib in binDeps:
+                        srcPaths.append(srcPathPrefix + unicode.encode(lib))
+                        dstPaths.append(dstPathPrefix + unicode.encode(lib))
+                paths = " ".join(srcPaths) + " " + dstPathPrefix
+                cpCmds = "cp " + paths
+                subprocess.check_call(cpCmds, shell=True)
+
+
 GetServiceDetails()
 InitBuildEnv()
 GenerateBuildInfo()
+CopyDeps()
 os.chdir(buildDir)
 Build()
 GenerateCompileCommands()
+PrintMessage('Done!', True)

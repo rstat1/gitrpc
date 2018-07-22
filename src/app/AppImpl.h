@@ -8,7 +8,7 @@
 #ifndef GSAPPIMPL
 #define GSAPPIMPL
 
-#include <gitserver/app/App.h>
+#include <app/App.h>
 
 namespace nexus {
     class AppImpl : public App

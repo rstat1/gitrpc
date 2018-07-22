@@ -1,0 +1,14 @@
+{
+	"name": "nexus_git",
+	"namespace": "nexus",
+	"start_date": {
+		"month": 7,
+		"day": 20,
+		"year": 2018
+	},
+	"bindeps": {
+		"linux": [
+			"libgit2.so.27"
+		]
+	}
+}

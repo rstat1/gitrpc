@@ -1,32 +1,34 @@
 syntax = "proto3";
 package nexus;
 
-import "google/protobuf/empty.proto";
-
 service GitService {
+    rpc InitRepository(InitRepositoryRequest) returns (GenericResponse) {}
     rpc ListKnownRefs(ListRefsRequest) returns (ListRefsResponse) {}
     rpc ListRefsForClone(ListRefsRequest) returns (ListRefsResponse) {}
     rpc UploadPack(UploadPackRequest) returns (UploadPackResponse) {}
-    rpc ReceivePack(ReceivePackRequest) returns (google.protobuf.Empty) {}
+    rpc ReceivePack(ReceivePackRequest) returns (GenericResponse) {}
 }
-
 
 message UploadPackRequest {
     string repoName = 1;
 }
-
 message UploadPackResponse {
     bytes data = 1;
 }
-
 message ReceivePackRequest {
     string repoName = 1;
     bytes data = 2;
 }
-
 message ListRefsRequest {
     string repoName = 1;
 }
 message ListRefsResponse {
     bytes data = 1;
+}
+message InitRepositoryRequest {
+    string repoName = 1;
+}
+message GenericResponse {
+    bool success = 1;
+    string errorMessage = 2;
 }

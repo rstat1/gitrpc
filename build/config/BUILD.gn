@@ -1323,20 +1323,6 @@ config("common") {
         "../../external/ffmpeg",
     ]
 }
-# config("protobuf_common") {
-#     include_dirs = [
-#       "../../external"
-#     ]
-#     if (target_os == "steamlink") {
-#         libs = [
-#           "../../external/libs/linux/arm/libprotobuf-lite.a",
-#         ]
-#     } else {
-#         libs = [
-#           "../../external/libs/linux/x64/libprotobuf-lite.a",
-#         ]
-#     }
-# }
 config("protobuf_common") {
     if (target_os == "steamlink") {
         libs = [

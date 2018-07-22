@@ -17,13 +17,15 @@ namespace nexus { namespace git {
 	using namespace google::protobuf;
 	class GitServiceImpl : public GitService::Service {
 		public:
-			void CreateGRPCServer();
+			void InitGitService();
 			Status ListKnownRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
 			Status ListRefsForClone(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
 			Status UploadPack(ServerContext* context, const UploadPackRequest* request, UploadPackResponse* response);
-			Status ReceivePack(ServerContext* context, const ReceivePackRequest* request, Empty* response);
+			Status ReceivePack(ServerContext* context, const ReceivePackRequest* request, GenericResponse* response);
+			Status InitRepository(ServerContext* context, const InitRepositoryRequest* request, GenericResponse* response);
 
 		private:
+			const char* CheckForError(int errCode, const char* message);
 			std::unique_ptr<Server> server;
 
 		SINGLETON(GitServiceImpl);

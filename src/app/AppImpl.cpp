@@ -5,13 +5,19 @@
 * found in the included LICENSE file.
 */
 
-#include <gitserver/app/AppImpl.h>
-#include <gitserver/GitServiceImpl.h>
+#include <common/GRPC.h>
+#include <app/AppImpl.h>
+#include <services/git/GitServiceImpl.h>
 
 namespace nexus {
 	using namespace nexus::git;
+	using namespace nexus::common;
     void AppImpl::Main() {
 		LOG_FROM_HERE_E("In AppImpl::AppMain");
-		GitServiceImpl::Get()->CreateGRPCServer();
+
+		GitServiceImpl::Get()->InitGitService();
+		GRPCServer::Get()->RegisterService(GitServiceImpl::Get());
+
+		GRPCServer::Get()->CreateGRPCServer();
     }
 }

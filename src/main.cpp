@@ -1,6 +1,6 @@
 #include <BuildInfo.h>
 #include <base/common.h>
-#include <gitserver/app/AppImpl.h>
+#include <app/AppImpl.h>
 
 using namespace nexus;
 

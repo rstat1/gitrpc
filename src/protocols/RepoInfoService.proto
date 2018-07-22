@@ -28,6 +28,7 @@ message GetCommitResponse {
 
 message GetCommitsRequest {
     string repoName = 1;
+    string branchName = 2;
 }
 message GetCommitsResponse {
     repeated Commit commits = 1;

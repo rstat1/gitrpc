@@ -6,7 +6,7 @@ group("libs") {
 }
 group("apps") {
     deps = [
-        "//src/gitserver:nexus_git"
+        "//src:nexus_git"
     ]
     # if (is_steamlink == true) {
     #     deps = [

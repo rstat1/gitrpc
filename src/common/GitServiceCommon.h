@@ -10,8 +10,8 @@
 
 #include <protocols/generated/GitService.grpc.pb.h>
 
-namespace nexus { namespace git {
-	#define SERVER_SOCKET "/tmp/9ut9494dhu.sock"
+namespace nexus { namespace common {
+	#define SERVER_SOCKET "/tmp/nexus_git_service"
 }}
 
 #endif

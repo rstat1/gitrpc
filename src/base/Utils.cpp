@@ -15,6 +15,7 @@
 #include <sys/syscall.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <errno.h>
 #endif
 
 using namespace boost::filesystem;
@@ -47,8 +48,8 @@ namespace base { namespace utils
 	{
 		const char alphabet[] =
 				"abcdefghijklmnopqrstuvwxyz"
-						"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-						"0123456789";
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				"0123456789";
 
 		size_t N_STRS = 1;
 		size_t S_LEN = len;
@@ -144,19 +145,24 @@ namespace base { namespace utils
 	bool CreateUnixSocket(const char* name)
 	{
 		struct sockaddr_un addr;
+		LOG_FROM_HERE("make unix socket named %s", name);
 		int socketFD = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (socketFD != -1)
 		{
 			memset(&addr, 0,sizeof (struct sockaddr_un));
 			addr.sun_family = AF_UNIX;
 			strncpy(addr.sun_path, name, sizeof(addr.sun_path) - 1);
-			if (bind(socketFD, (struct sockaddr*) &addr, sizeof(struct sockaddr_un)) != -1)
-			{
-				return true;
+			int ret = bind(socketFD, (struct sockaddr*) &addr, sizeof(struct sockaddr_un));
+			if (ret != -1) { return true; }
+			else {
+				LOG_FROM_HERE("failed %s", strerror(errno));
+				return false;
 			}
-			else { return false; }
 		}
-		else { return false; }
+		else {
+			LOG_FROM_HERE("failed %s", strerror(errno));
+			return false;
+		}
 	}
 	int64_t GetUnixTimestamp() {
 		struct timeval tv;

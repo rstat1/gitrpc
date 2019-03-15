@@ -5,6 +5,7 @@
 * found in the included LICENSE file.
 */
 
+#include <random>
 #include <base/Utils.h>
 #include <base/common.h>
 #include <boost/filesystem.hpp>

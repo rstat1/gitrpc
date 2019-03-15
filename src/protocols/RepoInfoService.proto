@@ -1,21 +1,22 @@
 syntax = "proto3";
 package nexus;
 
-import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
+option optimize_for = LITE_RUNTIME;
 
 service RepoInfoService {
     rpc GetCommit(GetCommitRequest) returns (GetCommitResponse) {}
     rpc GetCommits(GetCommitsRequest) returns (GetCommitsResponse) {}
-    rpc GetKnownRepos(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc GetKnownRepos(Empty) returns (Empty) {}
 }
+
+message Empty {}
 
 message Commit {
     string author = 1;
     string message = 2;
     string hash = 3;
     bytes body = 4;
-    google.protobuf.Timestamp date = 5;
+    string date = 5;
 
 }
 message GetCommitRequest {

@@ -1324,6 +1324,7 @@ config("common") {
     ]
 }
 config("protobuf_common") {
+    defines = [ "GRPC_USE_PROTO_LITE" ]
     if (target_os == "steamlink") {
         libs = [
             "../../external/libs/linux/arm/libprotobuf-lite.a",
@@ -1331,9 +1332,10 @@ config("protobuf_common") {
     } else {
         libs = [
             "ssl",
-            "protobuf",
-            "grpc",
-            "grpc++",
+            "../../external/libs/linux/x64/libprotobuf-lite.a",
+            "../../external/libs/linux/x64/libgrpc++_unsecure.so.1",
+            "../../external/libs/linux/x64/libgrpc_unsecure.so.7",
+            "../../external/libs/linux/x64/libgpr.so.7",
         ]
         ldflags = [
             "-L/usr/local/lib",

@@ -14,17 +14,17 @@ namespace nexus {
 	using namespace base::app;
 	class App {
 		public:
-            App(std::function<void()> appMain) {
-                app = new App::Impl(appMain);
-            }
+			App(std::function<void()> appMain) {
+				app = new App::Impl(appMain);
+			}
 			APP_BASE(Impl)
-                public:
-                    void TaskRunnerInitComplete() override
-                    {
-                        LOG_FROM_HERE_E("In TaskRunnerInitComplete");
-                        this->appFunc();
-                    }
-            END_APP_BASE()
+				public:
+					void TaskRunnerInitComplete() override
+					{
+						LOG_FROM_HERE_E("In TaskRunnerInitComplete");
+						this->appFunc();
+					}
+			END_APP_BASE()
 		private:
 			App::Impl* app;
 	};

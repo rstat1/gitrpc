@@ -22,7 +22,6 @@ namespace nexus { namespace git {
 
 	void GitServiceImpl::InitGitService() {
 		git_libgit2_init();
-
 	}
 	Status GitServiceImpl::ListKnownRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response) {
 		LOG_FROM_HERE_E("ListKnowRefs request")
@@ -59,17 +58,18 @@ namespace nexus { namespace git {
 			return Status::OK;
 		}
 
-		LOG_FROM_HERE("data length %i", request->data().length())
+		LOG_FROM_HERE("data length %i", request->data().size())
 
-		CFE(git_repository_open_bare(&repo, newRepoPath.c_str()), "Failed to open repo", VF([&]() {
+		CHECK(git_repository_open_bare(&repo, newRepoPath.c_str()), "Failed to open repo", SUCCESS([&]() {
 			git_repository_odb(&odb, repo);
-			CFE(git_odb_write_pack(&wp, odb, GitServiceImpl::TransferProgressCB, nullptr),
-				"failed to get writepack funcptrs", VF([&]{
-					CFE(wp->append(wp, request->data().data(), request->data().size(), &stats),
+			CHECK(git_odb_write_pack(&wp, odb, GitServiceImpl::TransferProgressCB, nullptr),
+				"failed to get writepack funcptrs", SUCCESS([&]{
+					CHECK(wp->append(wp, request->data().data(), request->data().size(), &stats),
 						"Failed writing pack",
-						VF([&]() {
+						SUCCESS([&]() {
 							LOG_FROM_HERE_E("wrote pack successfully");
-							CFE(wp->commit(wp, &stats), "failed commiting pack", VF([&](){}))
+							CHECK(wp->commit(wp, &stats), "failed commiting pack", SUCCESS([&](){}))
+							this->WalkAndPrintObjectIDs(repo);
 							git_repository_free(repo);
 						})
 					);
@@ -87,13 +87,31 @@ namespace nexus { namespace git {
 		git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
 		opts.flags = GIT_REPOSITORY_INIT_MKPATH | GIT_REPOSITORY_INIT_BARE | GIT_REPOSITORY_INIT_NO_REINIT;
 
-		CFE(git_repository_init_ext(&repo, newRepoPath.c_str(), &opts), "Failed to init repo", VF([&](){
+		CHECK(git_repository_init_ext(&repo, newRepoPath.c_str(), &opts), "Failed to init repo", SUCCESS([&](){
 			git_repository_free(repo);
 		}));
 
 		return Status::OK;
 	}
 	Status GitServiceImpl::WriteReference(ServerContext* context, const WriteReferenceRequest* request, GenericResponse* response) {
+		REPO_PATH(request->reponame());
+		git_repository* repo;
+
+		LOG_FROM_HERE("add ref %s, hash = %s", request->refname().c_str(), request->refrev().c_str());
+
+		CHECK(git_repository_open_bare(&repo, newRepoPath.c_str()), "Failed to open repo", SUCCESS([&]() {
+			git_oid* objectID;
+			git_reference* newRef;
+
+			git_oid_fromstr(objectID, request->refrev().c_str());
+			CHECK(git_reference_create(&newRef, repo, request->refname().c_str(), objectID, 0, NULL), "",
+				SUCCESS([&]() {
+					// CHECK(git_repository_set_head(repo, const char *refname))
+
+				})
+			);
+		}));
+
 		return Status::OK;
 	}
 	const char* GitServiceImpl::CheckForError(int errCode, const char* message) {
@@ -131,5 +149,23 @@ namespace nexus { namespace git {
 	int GitServiceImpl::TransferProgressCB(const git_transfer_progress* stats, void* payload) {
 		LOG_FROM_HERE("total received objects: %i", stats->total_objects);
 		return 0;
+	}
+	void GitServiceImpl::WalkAndPrintObjectIDs(git_repository* repo) {
+		git_oid *oid;
+		git_revwalk* out;
+		git_commit *commit = nullptr;
+		if (!git_revwalk_new(&out, repo)) {
+			// while (git_revwalk_next(oid, out) == 0) {
+			// 	LOG_FROM_HERE("object id: %s", git_oid_tostr_s(oid));
+			// }
+			// if (strcmp(this->CheckForError(git_revwalk_next(oid, out), "failed to revwalk_next"), "") == 0) {
+			// } else {
+			// 	LOG_FROM_HERE_E("failed to revwalk_next");
+			// }
+			// for (; !git_revwalk_next(oid, out); git_commit_free(commit)) {
+			// }
+		} else {
+			LOG_FROM_HERE_E("failed to revwalk");
+		}
 	}
 }}

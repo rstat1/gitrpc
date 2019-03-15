@@ -1,6 +1,8 @@
 syntax = "proto3";
 package nexus;
 
+option optimize_for = LITE_RUNTIME;
+
 service GitService {
     rpc InitRepository(InitRepositoryRequest) returns (GenericResponse) {}
     rpc ListKnownRefs(ListRefsRequest) returns (ListRefsResponse) {}
@@ -38,5 +40,7 @@ message GenericResponse {
     string errorMessage = 2;
 }
 message WriteReferenceRequest {
-
+    string repoName = 1;
+    string refName = 2;
+    string refRev = 3;
 }

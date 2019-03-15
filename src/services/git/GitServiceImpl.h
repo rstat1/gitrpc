@@ -29,6 +29,7 @@ namespace nexus { namespace git {
 			Status WriteReference(ServerContext* context, const WriteReferenceRequest* request, GenericResponse* response);
 
 		private:
+			void WalkAndPrintObjectIDs(git_repository* repo);
 			void FillInGenericResponse(GenericResponse* resp, const char* msg, bool success);
 			std::string ConvertRepoNameToPath(std::string name);
 			const char* CheckForError(int errCode, const char* message);

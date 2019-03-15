@@ -1,6 +1,3 @@
-protobuf_generate("Shared") {
-    for_grpc = false
-}
 protobuf_generate("GitService") {
     for_grpc = true
 }

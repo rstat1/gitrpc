@@ -8,8 +8,8 @@
 #ifndef THREAD
 #define THREAD
 
-#include <base/common.h>
 #include <base/base_exports.h>
+#include <base/common.h>
 #include <base/threading/common/thread_types.h>
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
 #include <base/platform/linux/dispatcher/SharedThreadState.h>
@@ -17,42 +17,38 @@ using namespace platform;
 #endif
 using namespace std;
 
-namespace base { namespace threading
-{
+namespace base { namespace threading {
 	class Dispatcher;
 
-    class BASEAPI PlatformThread
-	{
+	class BASEAPI PlatformThread {
+	public:
+		class BASEAPI Delegate {
 		public:
-			class BASEAPI Delegate
-			{
-				public:
-					virtual void Start(const char* name) = 0;
-					virtual void ThreadMain() = 0;
-					ThreadID Id;
-					#if defined(OS_LINUX) || defined(OS_STEAMLINK)
-					SharedThreadState* sts;
-					#endif
-					void* extra;
-				protected:
-					virtual ~Delegate() {}
-			};
-			PlatformThread() { }
-			~PlatformThread() {}
-			PlatformThread(LPVOID param);
-			static ThreadID Create(Delegate* delegate, const char* name);
-			static void SetThreadName(const char* name);
-			static ThreadID threadHandle;
+			virtual void Start(const char *name) = 0;
+			virtual void ThreadMain() = 0;
+			ThreadID Id;
+#if defined(OS_LINUX) || defined(OS_STEAMLINK)
+			SharedThreadState *sts;
+#endif
+			void *extra;
 
+		protected:
+			virtual ~Delegate() {}
+		};
+		PlatformThread() {}
+		~PlatformThread() {}
+		PlatformThread(LPVOID param);
+		static ThreadID Create(Delegate *delegate, const char *name);
+		static void SetThreadName(const char *name);
+		static ThreadID threadHandle;
 	};
-	struct ThreadStartInfo
-	{
-		PlatformThread::Delegate* ThreadDelegate;
-		Dispatcher* DispatcherRef;
-		const char* threadName;
-		void* extra;
+	struct ThreadStartInfo {
+		PlatformThread::Delegate *ThreadDelegate;
+		Dispatcher *DispatcherRef;
+		const char *threadName;
+		void *extra;
 	};
-}}
+}} // namespace base::threading
 
 //#if defined(OS_WIN)
 //#include <base/threading/platform/PlatformThreadWin.h>

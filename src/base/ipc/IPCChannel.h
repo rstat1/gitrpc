@@ -8,25 +8,23 @@
 #ifndef IPCCHAN
 #define IPCCHAN
 
-#include <string>
-#include <functional>
 #include <base/base_exports.h>
 #include <base/ipc/PlatformPipe.h>
+#include <functional>
+#include <string>
 
 // using namespace base::threading::IO;
 
-namespace base { namespace ipc
-{
-	class BASEAPI IPCChannel
-	{
-		public:
-			IPCChannel();
-			void WriteMessage(void* buffer);
-			int GetClientHandle() { return channelBacking->GetClientHandle(); }
+namespace base { namespace ipc {
+	class BASEAPI IPCChannel {
+	public:
+		IPCChannel();
+		void WriteMessage(void *buffer);
+		int GetClientHandle() { return channelBacking->GetClientHandle(); }
 
-		private:
-			PlatformChannelPair* channelBacking;
+	private:
+		PlatformChannelPair *channelBacking;
 	};
-}}
+}} // namespace base::ipc
 
 #endif

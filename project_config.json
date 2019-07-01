@@ -8,9 +8,7 @@
 	},
 	"bindeps": {
 		"linux": [
-			"libgrpc++_unsecure.so.1",
-			"libgrpc_unsecure.so.7",
-			"libgpr.so.7"
+			"libgit2.so.28"
 		]
 	}
 }

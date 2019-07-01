@@ -10,23 +10,21 @@
 
 #include <base/threading/dispatcher/MessagePump.h>
 
-namespace base { namespace threading
-{
-	class BASEAPI TaskRunner
-	{
-		public:
-			TaskRunner();
-			void Start();
-			void RunTask(DispatcherTask* task);
-			void Init(const char* taskRunnerName, DispatcherTask* TaskRunnerInitMethod);
-			void* extra;
-			ThreadID Id;
-			DispatcherMessagePump* dmp;
-		private:
-			const char* runnerName;
-			DispatcherTask* initTask;
+namespace base { namespace threading {
+	class BASEAPI TaskRunner {
+	public:
+		TaskRunner();
+		void Start();
+		void RunTask(DispatcherTask *task);
+		void Init(const char *taskRunnerName, DispatcherTask *TaskRunnerInitMethod);
+		void *extra;
+		ThreadID Id;
+		DispatcherMessagePump *dmp;
 
+	private:
+		const char *runnerName;
+		DispatcherTask *initTask;
 	};
-}}
+}} // namespace base::threading
 
 #endif

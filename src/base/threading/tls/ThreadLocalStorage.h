@@ -10,16 +10,14 @@
 
 #include <base/threading/common/thread_types.h>
 
-namespace base { namespace threading
-{
-	class ThreadLocalStorage
-	{
-		public:
-			static void AllocateTLSSlot(SlotType* slot);
-			static void FreeTLSSlot(SlotType slot);
-			static void SetTLSSlotValue(void* value, SlotType slot);
-			static void* GetTLSSlotValue(SlotType slot);
+namespace base { namespace threading {
+	class ThreadLocalStorage {
+	public:
+		static void AllocateTLSSlot(SlotType *slot);
+		static void FreeTLSSlot(SlotType slot);
+		static void SetTLSSlotValue(void *value, SlotType slot);
+		static void *GetTLSSlotValue(SlotType slot);
 	};
-}}
+}} // namespace base::threading
 
 #endif

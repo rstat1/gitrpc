@@ -8,11 +8,11 @@
 #include <base/common.h>
 
 #if defined(OS_WIN)
-	#ifdef BASE_EXPORTS
-		#define BASEAPI __declspec(dllexport)
-	#else
-		#define BASEAPI __declspec(dllimport)
-	#endif
+#ifdef BASE_EXPORTS
+#define BASEAPI __declspec(dllexport)
+#else
+#define BASEAPI __declspec(dllimport)
+#endif
 #else
 #define BASEAPI
 #endif

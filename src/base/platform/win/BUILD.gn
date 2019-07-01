@@ -1,0 +1,19 @@
+component("PAL") {
+    configs = [
+        "//build/config:common", 
+        "//build/config:default_libs"
+    ]
+    public_configs = [ "//build/config:win_flags" ]
+    defines = [
+        "BASE_EXPORTS"
+    ]
+    sources = [
+        # "ipc/PlatformPipeWin.cpp",
+        "threading/PlatformThreadWin.cpp",
+        "threading/ConditionVariableWin.cpp",
+        "threading/ThreadLocalStorageWin.cpp",
+        "dispatcher/MessagePumpWin.cpp",
+        "dispatcher/MessagePumpWin.h",
+        "dispatcher/DispatcherTypesWin.h",
+    ]
+}

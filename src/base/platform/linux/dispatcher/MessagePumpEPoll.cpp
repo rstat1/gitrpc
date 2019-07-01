@@ -26,12 +26,12 @@ namespace base { namespace threading
 
 	void MessagePumpEPoll::MakeMessagePump(bool isTaskRunner)
 	{
-		LOG_FROM_HERE("Current Thread ID: %u, name = %s", syscall(__NR_gettid), this->wndIdExtenstion);
+		LOG_ARGS("Current Thread ID: %u, name = %s", syscall(__NR_gettid), this->wndIdExtenstion);
 
-        struct epoll_event eventInfo;
+		struct epoll_event eventInfo;
 		int epollFD, result;
 
-		LOG_FROM_HERE_E(this->wndIdExtenstion);
+		LOG_MSG(this->wndIdExtenstion);
 		SharedThreadState* sts = this->GetSharedState(isTaskRunner);
 
 		if (sts == nullptr) { writeToLog("Why is the null?"); }
@@ -39,25 +39,25 @@ namespace base { namespace threading
 		{
 			int result = pipe(sts->fds);
 			if (result == -1)
-            {
-                perror(this->wndIdExtenstion);
-                LOG_FROM_HERE("Pipe could create not. Result: %i", errno);
-            }
-            else
-            {
-                if (fcntl(sts->fds[0], F_SETFL, O_NONBLOCK) != 0) { writeToLog("fcntl couldn't. (1)"); }
-			    if (fcntl(sts->fds[1], F_SETFL, O_NONBLOCK) != 0) { writeToLog("fcntl couldn't. (2)"); }
+			{
+				perror(this->wndIdExtenstion);
+				LOG_ARGS("Pipe could create not. Result: %i", errno);
+			}
+			else
+			{
+				if (fcntl(sts->fds[0], F_SETFL, O_NONBLOCK) != 0) { writeToLog("fcntl couldn't. (1)"); }
+				if (fcntl(sts->fds[1], F_SETFL, O_NONBLOCK) != 0) { writeToLog("fcntl couldn't. (2)"); }
 
-			    sts->epollFD = epoll_create(1);
-			    if (sts->epollFD == -1) { writeToLog("Failed to create epoll FD"); }
+				sts->epollFD = epoll_create(1);
+				if (sts->epollFD == -1) { writeToLog("Failed to create epoll FD"); }
 
-			    memset(&eventInfo, 0, sizeof(epoll_event));
-			    eventInfo.events = EPOLLIN | EPOLLET;
-			    eventInfo.data.fd = sts->fds[0];
+				memset(&eventInfo, 0, sizeof(epoll_event));
+				eventInfo.events = EPOLLIN | EPOLLET;
+				eventInfo.data.fd = sts->fds[0];
 
-			    result = epoll_ctl(sts->epollFD, EPOLL_CTL_ADD, sts->fds[0], &eventInfo);
-			    if (result != 0) { writeToLog("epoll_ctl failed"); }
-            }
+				result = epoll_ctl(sts->epollFD, EPOLL_CTL_ADD, sts->fds[0], &eventInfo);
+				if (result != 0) { writeToLog("epoll_ctl failed"); }
+			}
 		}
 		this->StartMessageLoop(isTaskRunner);
 	}
@@ -68,12 +68,12 @@ namespace base { namespace threading
 	}
 	void MessagePumpEPoll::StartMessageLoop(bool isTaskRunner)
 	{
-		LOG_FROM_HERE("Current Thread ID: %u, name = %s", syscall(__NR_gettid), this->wndIdExtenstion)
+		LOG_ARGS("Current Thread ID: %u, name = %s", syscall(__NR_gettid), this->wndIdExtenstion)
 
 		bool runInitTask = true;
 		DispatcherTask* task;
 		MessageReceiver* recv;
-        SharedThreadState* sts = this->GetSharedState(isTaskRunner);
+		SharedThreadState* sts = this->GetSharedState(isTaskRunner);
 
 		if (sts != nullptr)
 		{
@@ -86,7 +86,7 @@ namespace base { namespace threading
 				if (runInitTask && this->initTask != nullptr)
 				{
 					runInitTask = false;
-					LOG_FROM_HERE_E("Running init task.")
+					LOG_MSG("Running init task.")
 					write(sts->fds[1], &initTask, sizeof(initTask));
 				}
 				epoll_wait(sts->epollFD, events, 1, -1);
@@ -120,21 +120,21 @@ namespace base { namespace threading
 	}
 	void MessagePumpEPoll::RegisterMessageHandler(MessageReceiver* recv)
 	{
-		NOTIMPLEMENTED("DispatcherMessagePump::RegisterMessageHandler() - Linux");
+		NOTIMPLEMENTED();
 	}
-    SharedThreadState* MessagePumpEPoll::GetSharedState(bool isTaskRunner)
-    {
-        SharedThreadState* sts;
-        if (isTaskRunner)
-        {
-            TaskRunner* taskRunner = Dispatcher::Get()->GetTaskRunner(this->wndIdExtenstion);
-            sts = (SharedThreadState*)taskRunner->extra;
-        }
-        else
-        {
-            return Dispatcher::Get()->GetThread(this->wndIdExtenstion)->sts;
-        }
-        if (sts == nullptr) { return nullptr; }
-        else { return sts; }
-    }
+	SharedThreadState* MessagePumpEPoll::GetSharedState(bool isTaskRunner)
+	{
+		SharedThreadState* sts;
+		if (isTaskRunner)
+		{
+			TaskRunner* taskRunner = Dispatcher::Get()->GetTaskRunner(this->wndIdExtenstion);
+			sts = (SharedThreadState*)taskRunner->extra;
+		}
+		else
+		{
+			return Dispatcher::Get()->GetThread(this->wndIdExtenstion)->sts;
+		}
+		if (sts == nullptr) { return nullptr; }
+		else { return sts; }
+	}
 }}

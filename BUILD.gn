@@ -8,13 +8,4 @@ group("apps") {
     deps = [
         "//src:nexus_git"
     ]
-    # if (is_steamlink == true) {
-    #     deps = [
-    #         "//src/client:transcode_client",
-    #     ]
-    # } else {
-    #     deps = [
-    #         "//src/server:transcode_server"
-    #     ]
-    # }
 }

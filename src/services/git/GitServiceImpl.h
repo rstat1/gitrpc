@@ -13,6 +13,8 @@
 #include <grpcpp/server.h>
 #include <common/GitServiceCommon.h>
 
+#include <grpcpp/support/server_interceptor.h>
+
 namespace nexus { namespace git {
 	using namespace grpc;
 	using namespace nexus::common;
@@ -38,6 +40,22 @@ namespace nexus { namespace git {
 			std::unique_ptr<Server> server;
 
 		SINGLETON(GitServiceImpl);
+	};
+	class GitServiceInterceptor : public grpc::experimental::Interceptor {
+		public:
+			GitServiceInterceptor(grpc::experimental::ServerRpcInfo* info) : info(info) { LOG_MSG("created interceptor"); }
+			void Intercept(grpc::experimental::InterceptorBatchMethods* methods) override {
+				LOG_ARGS("method: %s", info->method());
+				methods->Proceed();
+			}
+		private:
+			grpc::experimental::ServerRpcInfo* info;
+	};
+	class GitServiceInterceptorFactory : public grpc::experimental::ServerInterceptorFactoryInterface {
+		public:
+			grpc::experimental::Interceptor* CreateServerInterceptor(grpc::experimental::ServerRpcInfo* info) override {
+				return new GitServiceInterceptor(info);
+			}
 	};
 }}
 

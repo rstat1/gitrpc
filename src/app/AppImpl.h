@@ -15,7 +15,7 @@ namespace nexus {
 	{
 		public:
 			AppImpl(): App(std::bind(&AppImpl::Main, this)) {
-				LOG_FROM_HERE_E("init TranscodeServer");
+				LOG_MSG("init gitrpc server");
 			}
 			void Main();
 		private:

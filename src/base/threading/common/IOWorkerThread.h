@@ -14,16 +14,14 @@
 
 using namespace base::threading;
 
-namespace base { namespace threading { namespace IO
-{
-	class BASEAPI IOWorkerThread : public PlatformThread::Delegate
-	{
-		public:
-			IOWorkerThread() {}
-			IOWorkerThread(IOTaskBase* task);
-			void Start(const char* name) OVERRIDE;
-			void ThreadMain() OVERRIDE;
+namespace base { namespace threading { namespace IO {
+	class BASEAPI IOWorkerThread : public PlatformThread::Delegate {
+	public:
+		IOWorkerThread() {}
+		IOWorkerThread(IOTaskBase *task);
+		void Start(const char *name) OVERRIDE;
+		void ThreadMain() OVERRIDE;
 	};
-}}}
+}}} // namespace base::threading::IO
 
 #endif

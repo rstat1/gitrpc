@@ -13,11 +13,7 @@ namespace nexus {
 	using namespace nexus::git;
 	using namespace nexus::common;
     void AppImpl::Main() {
-		LOG_FROM_HERE_E("In AppImpl::AppMain");
-
-		GitServiceImpl::Get()->InitGitService();
-		GRPCServer::Get()->RegisterService(GitServiceImpl::Get());
-
+		LOG_MSG("In AppImpl::AppMain");
 		GRPCServer::Get()->CreateGRPCServer();
     }
 }

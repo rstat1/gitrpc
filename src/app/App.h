@@ -21,7 +21,7 @@ namespace nexus {
 				public:
 					void TaskRunnerInitComplete() override
 					{
-						LOG_FROM_HERE_E("In TaskRunnerInitComplete");
+						LOG_MSG("In TaskRunnerInitComplete");
 						this->appFunc();
 					}
 			END_APP_BASE()

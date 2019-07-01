@@ -1,0 +1,24 @@
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+**/monologue.txt
+**/armite-log.txt
+external/libs/*
+**/Debug-x86_64/**
+**/Release_x86_64/**
+**/Debug_x64/**
+**/Release-x64/**
+*.sln
+*.lib
+*.ninja
+build/tools/Cake/
+*.zip
+**/syms/**
+\.directory
+src/BuildInfo.h
+*.pb.cc
+*.pb.h
+\.vscode/cquery_cached_index/
+
+*.pyc

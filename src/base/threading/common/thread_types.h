@@ -23,14 +23,14 @@ typedef DWORD ThreadID;
 
 #if defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_STEAMLINK)
 #include <pthread.h>
-typedef void* LPVOID;
+typedef void *LPVOID;
 typedef pthread_mutex_t PlatformMutex;
 typedef pthread_t platformThread;
 typedef pthread_t ThreadID;
-typedef void* ThreadProc;
+typedef void *ThreadProc;
 typedef pthread_key_t SlotType;
 #define ThreadFunction void *(*ThreadStartFunction)(void *)
-#define EBUSY  16
+#define EBUSY 16
 #define EINVAL 22
 #endif
 

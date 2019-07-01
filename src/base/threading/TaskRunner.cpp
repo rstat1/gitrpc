@@ -14,11 +14,9 @@
 using namespace platform;
 #endif
 
-namespace base { namespace threading
-{
+namespace base { namespace threading {
 	TaskRunner::TaskRunner() {}
-	void TaskRunner::Init(const char* taskRunnerName, DispatcherTask* TaskRunnerInitMethod)
-	{
+	void TaskRunner::Init(const char *taskRunnerName, DispatcherTask *TaskRunnerInitMethod) {
 #if !defined(OS_WIN)
 		this->Id = base::utils::GetPthreadID();
 #else
@@ -28,20 +26,18 @@ namespace base { namespace threading
 		this->initTask = TaskRunnerInitMethod;
 
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
-  		SharedThreadState* sts = new SharedThreadState();
-        sts->blockUntilAHInit = new ConditionVariable();
-        this->extra = sts;
+		SharedThreadState *sts = new SharedThreadState();
+		sts->blockUntilAHInit = new ConditionVariable();
+		this->extra = sts;
 #endif
 		MESSAGE_PUMP_INIT(taskRunnerName);
 
 		Dispatcher::Get()->AddTaskRunner(taskRunnerName, this);
 	}
-	void TaskRunner::Start()
-	{
+	void TaskRunner::Start() {
 		this->dmp->MakeMessagePump(this->initTask, true);
 	}
-	void TaskRunner::RunTask(DispatcherTask* task)
-	{
+	void TaskRunner::RunTask(DispatcherTask *task) {
 		dmp->PostMessageToThread(this->runnerName, task, true);
 	}
-}}
+}} // namespace base::threading

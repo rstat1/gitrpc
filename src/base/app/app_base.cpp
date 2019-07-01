@@ -7,14 +7,12 @@
 
 #include <base/app/app_base.h>
 
-namespace base { namespace app
-{
-	void AppBase::InitAppBase()
-	{
-		LOG_FROM_HERE_E("Init app")
+namespace base { namespace app {
+	void AppBase::InitAppBase() {
+		LOG_MSG("Init app")
 		NEW_TASK0(initTask, AppBase, this, TaskRunnerInitComplete);
 		this->taskRunner = new TaskRunner();
 		this->taskRunner->Init("Main", initTask);
 		this->taskRunner->Start();
 	}
-}}
+}} // namespace base::app

@@ -1,15 +1,16 @@
 shared_library("base") {
     deps = ["//build/config/sanitizers:deps"]
     configs += [ "//build/config:common" ]
-    cflags_cc = [
-      "-fPIC"
-    ]
-    configs += [ "//build/config:linux_flags" ]
-    deps += [ "//src/base/platform/linux:base_linux" ]
-    libs = [
-       "../../external/libs/linux/$target_cpu/libboost_system.a",
-       "../../external/libs/linux/$target_cpu/libboost_filesystem.a"
-    ]
+    if (is_linux) {
+        cflags_cc = [
+            "-fPIC"
+        ]
+    }
+    deps += [ "//src/base/platform/$target_os:PAL" ]    
+    if (is_win) {
+        defines = [ "BASE_EXPORTS" ]
+    }
+    
     sources = [
         "Utils.cpp",
         "base64.cpp",
@@ -20,8 +21,6 @@ shared_library("base") {
         "threading/TaskRunner.cpp",
         "threading/IOWorkerThread.cpp",
         "threading/dispatcher/Dispatcher.cpp",
-    ]
-    public = [
         "Utils.h",
         "common.h",
         "base64.h",

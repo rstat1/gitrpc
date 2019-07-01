@@ -8,23 +8,19 @@
 #include <base/Utils.h>
 #include <base/threading/common/IOWorkerThread.h>
 
-namespace base { namespace threading { namespace IO
-{
-	IOWorkerThread::IOWorkerThread(IOTaskBase* task)
-	{
+namespace base { namespace threading { namespace IO {
+	IOWorkerThread::IOWorkerThread(IOTaskBase *task) {
 		this->Id = base::utils::GetThreadID();
-		#if defined(OS_LINUX) || defined(OS_STEAMLINK)
+#if defined(OS_LINUX) || defined(OS_STEAMLINK)
 		this->sts = new platform::SharedThreadState();
-		#endif
+#endif
 		this->extra = task;
 	}
-	void IOWorkerThread::Start(const char* name)
-	{
+	void IOWorkerThread::Start(const char *name) {
 		if (!PlatformThread::Create(this, name)) { writeToLog("Thread creation failed."); }
 	}
-	void IOWorkerThread::ThreadMain()
-	{
-		IOTaskBase* task = (IOTaskBase*)this->extra;
+	void IOWorkerThread::ThreadMain() {
+		IOTaskBase *task = (IOTaskBase *)this->extra;
 		task->ExecuteTask();
 	}
-}}}
+}}} // namespace base::threading::IO

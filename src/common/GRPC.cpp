@@ -11,6 +11,8 @@
 #include <base/Utils.h>
 #include <common/GRPC.h>
 #include <grpcpp/server.h>
+#include <grpc++/grpc++.h>
+#include <services/git/GitServiceImpl.h>
 
 namespace nexus { namespace common {
 	using namespace grpc;
@@ -19,18 +21,23 @@ namespace nexus { namespace common {
 	void GRPCServer::CreateGRPCServer() {
 		unlink(SERVER_SOCKET);
 		std::thread serverThread([&] {
+			nexus::git::GitServiceImpl* gitSvc = new nexus::git::GitServiceImpl();
+			gitSvc->InitGitService();
 			std::string address("unix:");
 			address.append(SERVER_SOCKET);
+			std::vector<std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>> interceptor_creators;
+			interceptor_creators.push_back(std::unique_ptr<nexus::git::GitServiceInterceptorFactory>(new nexus::git::GitServiceInterceptorFactory()));
 			if (CreateUnixSocket(SERVER_SOCKET)) {
 				ServerBuilder builder;
+				// builder.AddListeningPort()
 				builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-				builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::MAX_POLLERS, 2);
-				for (grpc::Service* s : this->services) {
-					builder.RegisterService(s);
-				}
+				builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
+				// builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::MAX_POLLERS, 2);
+				builder.RegisterService(gitSvc);
 				this->server = builder.BuildAndStart();
+				server->Wait();
 			} else {
-				LOG_FROM_HERE_E("failed to CreateUnixSocket");
+				LOG_MSG("failed to CreateUnixSocket");
 				exit(0);
 			}
 		});

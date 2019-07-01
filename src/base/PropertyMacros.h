@@ -9,7 +9,7 @@
 #define PROPMAC
 
 #define PROPERTY_PTR(name, type) private: \
-								 type* value##name;\
+								 type* value##name = nullptr;\
 								 public: \
 								 void Set##name(type* propertyType) { value##name = propertyType; } \
 								 type* Get##name() { return value##name; }

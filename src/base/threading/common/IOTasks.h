@@ -8,23 +8,22 @@
 #ifndef IOTSKS
 #define IOTSKS
 
-#include <future>
-#include <functional>
 #include <base/threading/dispatcher/DispatcherTypes.h>
+#include <functional>
+#include <future>
 
 using namespace base::threading;
 
-namespace base { namespace threading { namespace IO
-{
-    class IOTaskBase
-    {
-        public:
-            virtual void ExecuteTask() = 0;
-		protected:
-			std::function<void(TaskResult*)> resultCallback;
-			DispatcherTask* task;
-    };
+namespace base { namespace threading { namespace IO {
+	class IOTaskBase {
+	public:
+		virtual void ExecuteTask() = 0;
 
-}}}
+	protected:
+		std::function<void(TaskResult *)> resultCallback;
+		DispatcherTask *task;
+	};
+
+}}} // namespace base::threading::IO
 
 #endif

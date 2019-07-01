@@ -24,7 +24,7 @@ namespace base { namespace ipc
 		if (result == -1)
 		{
 			perror("PlatformPipePosix");
-			LOG_FROM_HERE("socketpair could create not. Result: %i", errno);
+			LOG_ARGS("socketpair could create not. Result: %i", errno);
 		}
 		else
 		{

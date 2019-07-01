@@ -10,8 +10,7 @@ component("external") {
     libs = [
         "z",
         "ssl",
-        "git2",
-        #"libs/linux/x64/libgit2.so.27"
+        "libs/linux/x64/libgit2.so.28"
     ]
     if (is_linux) {
         configs = [ "//build/config:linux_flags" ]

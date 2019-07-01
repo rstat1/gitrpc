@@ -1,10 +1,14 @@
-component("base_linux") {
-    configs = [
+component("PAL") {
+    public_configs = [
         "//build/config:common",
         "//build/config:linux_flags"
     ]
     cflags = [
         "-fPIC"
+    ]
+    libs = [
+    #    "../../external/libs/linux/$target_cpu/libboost_system.a",
+    #    "../../external/libs/linux/$target_cpu/libboost_filesystem.a"
     ]
     sources = [
         "ipc/PlatformPipePosix.cpp",

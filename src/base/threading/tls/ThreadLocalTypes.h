@@ -7,18 +7,16 @@
 
 #include <base/threading/ThreadLocalStorage.h>
 
-namespace base { namespace threading
-{
+namespace base { namespace threading {
 	template <typename Type>
-	class ThreadLocalPointer
-	{
-		public:
-			ThreadLocalPointer() : slot() { ThreadLocalStorage::AllocateTLSSlot(&slot); }
-			~ThreadLocalPointer() { ThreadLocalStorage::FreeTLSSlot(slot); }
-			Type* Get() { return static_cast<Type*>(ThreadLocalStorage::GetTLSSlotValue(slot)); }
-			void Set(void* ptr) { ThreadLocalStorage::SetTLSSlotValue(const_cast<void*>(static_cast<const void*>(ptr)), slot); }
-		private:
-			SlotType slot;
+	class ThreadLocalPointer {
+	public:
+		ThreadLocalPointer() : slot() { ThreadLocalStorage::AllocateTLSSlot(&slot); }
+		~ThreadLocalPointer() { ThreadLocalStorage::FreeTLSSlot(slot); }
+		Type *Get() { return static_cast<Type *>(ThreadLocalStorage::GetTLSSlotValue(slot)); }
+		void Set(void *ptr) { ThreadLocalStorage::SetTLSSlotValue(const_cast<void *>(static_cast<const void *>(ptr)), slot); }
 
+	private:
+		SlotType slot;
 	};
-}}
+}} // namespace base::threading

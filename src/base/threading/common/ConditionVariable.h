@@ -8,30 +8,29 @@
 #ifndef CONDVAR
 #define CONDVAR
 
-#include <base/common.h>
 #include <base/base_exports.h>
+#include <base/common.h>
 #include <base/threading/common/thread_types.h>
 
-namespace base { namespace threading
-{
-	class BASEAPI ConditionVariable
-	{
-		public:
-			ConditionVariable();
-			ConditionVariable(PlatformMutex m);
-			~ConditionVariable(void) {}
-            virtual void Wait();
-            virtual void Signal();
-		private:
+namespace base { namespace threading {
+	class BASEAPI ConditionVariable {
+	public:
+		ConditionVariable();
+		ConditionVariable(PlatformMutex m);
+		~ConditionVariable(void) {}
+		virtual void Wait();
+		virtual void Signal();
+
+	private:
 #if defined(OS_WIN)
-			#include <windows.h>
-			CONDITION_VARIABLE c;
-			CRITICAL_SECTION cs;
+#include <windows.h>
+		CONDITION_VARIABLE c;
+		CRITICAL_SECTION cs;
 #else
-			pthread_cond_t condition;
-			PlatformMutex m;
+		pthread_cond_t condition;
+		PlatformMutex m;
 #endif
 	};
-}}
+}} // namespace base::threading
 
 #endif

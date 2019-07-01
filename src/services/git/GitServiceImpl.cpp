@@ -12,6 +12,8 @@
 #include <grpcpp/server_builder.h>
 #include <services/git/GitServiceImpl.h>
 
+#include <git/git2/refs.h>
+
 #define DEFAULT_REPO_PATH "/home/rstat1/Apps/test/"
 
 namespace nexus { namespace git {
@@ -67,15 +69,12 @@ namespace nexus { namespace git {
 			};
 			CHECK(git_odb_write_pack(&wp, odb, GitServiceImpl::TransferProgressCB, nullptr),
 				"failed to get writepack funcptrs", SUCCESS([&]{
-					CHECK(wp->append(wp, request->data().data(), request->data().size(), &stats),
-						"Failed writing pack",
-						SUCCESS([&]() {
-							LOG_MSG("wrote pack successfully");
-							CHECK(wp->commit(wp, &stats), "failed commiting pack", SUCCESS([&](){}))
-							this->WalkAndPrintObjectIDs(repo);
-							git_repository_free(repo);
-						})
-					);
+					CHECK(wp->append(wp, request->data().data(), request->data().size(), &stats), "Failed writing pack", SUCCESS([&]() {
+						LOG_MSG("wrote pack successfully");
+						CHECK(wp->commit(wp, &stats), "failed commiting pack", SUCCESS([&](){}))
+						this->WalkAndPrintObjectIDs(repo);
+						git_repository_free(repo);
+					}));
 			}));
 			return Status::OK;
 		}));
@@ -138,6 +137,12 @@ namespace nexus { namespace git {
 		return newRepoPath;
 	}
 	int GitServiceImpl::GetRepoReferences(git_reference* ref, void* payload) {
+		ListRefsResponse* resp = (ListRefsResponse*)payload;
+
+		GitReference* refInfo = resp->add_refs();
+		refInfo->set_referencename(git_reference_name(ref));
+		// refInfo->set_referencehash(git_reference_)
+
 		return 0;
 	}
 	void GitServiceImpl::FillInGenericResponse(GenericResponse* resp, const char* msg, bool success) {

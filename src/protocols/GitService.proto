@@ -12,6 +12,10 @@ service GitService {
     rpc WriteReference(WriteReferenceRequest) returns (GenericResponse) {}
 }
 
+message GitReference {
+    string referenceHash = 1;
+    string referenceName = 2;
+}
 message UploadPackRequest {
     string repoName = 1;
 }
@@ -28,7 +32,7 @@ message ListRefsRequest {
     string repoName = 1;
 }
 message ListRefsResponse {
-    repeated string data = 1;
+    repeated GitReference refs = 1;
     bool success = 2;
     string errorMessage = 3;
 }

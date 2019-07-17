@@ -29,6 +29,8 @@ namespace nexus { namespace git {
 			Status ReceivePack(ServerContext* context, const ReceivePackRequest* request, GenericResponse* response);
 			Status InitRepository(ServerContext* context, const InitRepositoryRequest* request, GenericResponse* response);
 			Status WriteReference(ServerContext* context, const WriteReferenceRequest* request, GenericResponse* response);
+			Status ReceivePackStream(ServerContext* context, ServerReader<ReceivePackRequest>* reader, GenericResponse* response);
+			Status UploadPackStream(ServerContext* context, const UploadPackRequest* request, ServerWriter<UploadPackResponse>* writer);
 
 		private:
 			void WalkAndPrintObjectIDs(git_repository* repo);
@@ -37,6 +39,8 @@ namespace nexus { namespace git {
 			const char* CheckForError(int errCode, const char* message);
 			static int GetRepoReferences(git_reference* ref, void* payload);
 			static int TransferProgressCB(const git_transfer_progress *stats, void *payload);
+			bool WriteToPack(const void* data, size_t size, git_repository* repo, git_odb_writepack *wp, bool commit);
+
 			std::unique_ptr<Server> server;
 
 		SINGLETON(GitServiceImpl);

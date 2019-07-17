@@ -37,7 +37,6 @@ message ListRefsResponse {
     repeated GitReference refs = 1;
     bool success = 2;
     string errorMessage = 3;
-    GitReference head = 4;
 }
 message InitRepositoryRequest {
     string repoName = 1;

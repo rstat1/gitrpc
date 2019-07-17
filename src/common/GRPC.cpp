@@ -43,6 +43,22 @@ namespace nexus { namespace common {
 		});
 		serverThread.detach();
 	}
+	void GRPCServer::CreateHTTPGRPCServer() {
+		std::thread serverThread([&] {
+			std::string serverAddr("0.0.0.0:9001");
+			nexus::git::GitServiceImpl* gitSvc = new nexus::git::GitServiceImpl();
+			gitSvc->InitGitService();
+			std::vector<std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>> interceptor_creators;
+			interceptor_creators.push_back(std::unique_ptr<nexus::git::GitServiceInterceptorFactory>(new nexus::git::GitServiceInterceptorFactory()));
+			ServerBuilder builder;
+			builder.AddListeningPort(serverAddr, grpc::InsecureServerCredentials());
+			builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
+			builder.RegisterService(gitSvc);
+			this->server = builder.BuildAndStart();
+			server->Wait();
+		});
+		serverThread.detach();
+	}
 	void GRPCServer::RegisterService(grpc::Service* service) {
 		this->services.push_back(service);
 	}

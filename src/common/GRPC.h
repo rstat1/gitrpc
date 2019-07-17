@@ -18,6 +18,7 @@ namespace nexus { namespace common {
 	class GRPCServer {
 		public:
 			void CreateGRPCServer();
+			void CreateHTTPGRPCServer();
 			void RegisterService(grpc::Service* service);
 
 		private:

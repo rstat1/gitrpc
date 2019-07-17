@@ -22,6 +22,7 @@ namespace nexus { namespace common {
 									  } else {\
 											response->set_success(false); \
 											response->set_errormessage(msg); \
+											return Status(StatusCode::INTERNAL, msg);\
 									  }
 
 	#define OPEN_REPO(name) git_repository* repo; \

@@ -19,3 +19,5 @@ compile_commands.json
 build.sh
 **/generated/**
 .ccls-cache/**
+*.pb.go
+src/gitrpc-frontend/gitrpc-frontend

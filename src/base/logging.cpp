@@ -78,14 +78,14 @@ void Logging::writeToLog(const char *entry, bool deleteFile, bool autoAppendTag)
 	FILE *pFile;
 
 	string logEntry("");
-	logEntry.append("[thread:");
+	logEntry.append("[");
 	logEntry.append(std::to_string(GetThreadID()));
 #if defined(OS_LINUX)
-	logEntry.append(",process:");
+	logEntry.append(";");
 	// logEntry.append("");
 	logEntry.append(program_invocation_short_name);
 #endif
-	logEntry.append(",file:");
+	logEntry.append(";");
 	if (autoAppendTag) { logEntry.append("All] "); }
 	logEntry.append(entry);
 

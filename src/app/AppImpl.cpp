@@ -14,6 +14,7 @@ namespace nexus {
 	using namespace nexus::common;
     void AppImpl::Main() {
 		LOG_MSG("In AppImpl::AppMain");
-		GRPCServer::Get()->CreateGRPCServer();
+		GRPCServer::Get()->CreateHTTPGRPCServer();
+		// GRPCServer::Get()->CreateGRPCServer();
     }
 }

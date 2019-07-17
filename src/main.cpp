@@ -6,7 +6,7 @@ using namespace nexus;
 
 int main(int argc, char* argv[]) {
 	InitLog("gitrpc.log");
-	LOG_ARGS("GitRPC Version: %s from the %s branch", BUILDNUMBER, BRANCH)
+	LOG_ARGS("GitRPC Version: %s.%s", BUILDNUMBER, BRANCH)
 
 	AppImpl* app = new AppImpl();
 	app->Main();

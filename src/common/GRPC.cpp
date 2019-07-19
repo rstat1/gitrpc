@@ -25,14 +25,9 @@ namespace nexus { namespace common {
 			gitSvc->InitGitService();
 			std::string address("unix:");
 			address.append(SERVER_SOCKET);
-			std::vector<std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>> interceptor_creators;
-			interceptor_creators.push_back(std::unique_ptr<nexus::git::GitServiceInterceptorFactory>(new nexus::git::GitServiceInterceptorFactory()));
 			if (CreateUnixSocket(SERVER_SOCKET)) {
 				ServerBuilder builder;
-				// builder.AddListeningPort()
 				builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-				builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
-				// builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::MAX_POLLERS, 2);
 				builder.RegisterService(gitSvc);
 				this->server = builder.BuildAndStart();
 				server->Wait();
@@ -48,8 +43,6 @@ namespace nexus { namespace common {
 			std::string serverAddr("0.0.0.0:9001");
 			nexus::git::GitServiceImpl* gitSvc = new nexus::git::GitServiceImpl();
 			gitSvc->InitGitService();
-			std::vector<std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>> interceptor_creators;
-			interceptor_creators.push_back(std::unique_ptr<nexus::git::GitServiceInterceptorFactory>(new nexus::git::GitServiceInterceptorFactory()));
 			ServerBuilder builder;
 			builder.AddListeningPort(serverAddr, grpc::InsecureServerCredentials());
 			// builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));

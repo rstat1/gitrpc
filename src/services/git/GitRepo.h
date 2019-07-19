@@ -19,12 +19,17 @@ namespace nexus { namespace git {
 			GitRepo(std::string name);
 			~GitRepo();
 			const char* Open(bool bare);
-			git_odb_writepack* WritePack();
+			const char* PackCommit(git_transfer_progress *stats);
+			const char* PackAppend(const void *data, size_t size, git_transfer_progress *stats);
+
             static int TransferProgressCB(const git_transfer_progress *stats, void *payload);
 		private:
+			const char* InitWritePackFunctions();
+
             git_odb* odb;
 			std::string repoName;
 			git_repository* repo;
+			git_odb_writepack* wp;
 	};
 }}
 

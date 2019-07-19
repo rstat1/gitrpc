@@ -30,8 +30,9 @@ func (rpc *RPCClient) Connect() {
 
 	grpc.EnableTracing = true
 
-	// rpc.connection, err = grpc.Dial("passthrough:///unix:///home/rstat1/Apps/nexus-git/out-x86_64/nexus_git_service", grpc.WithInsecure(), grpc.WithBlock())
-	rpc.connection, err = grpc.Dial("localhost:9001", grpc.WithInsecure(), grpc.WithBlock())
+	//TODO: Not hard-coded socket path
+	rpc.connection, err = grpc.Dial("passthrough:///unix:///home/rstat1/Apps/nexus-git/out-x86_64/nexus_git_service", grpc.WithInsecure(), grpc.WithBlock())
+	// rpc.connection, err = grpc.Dial("localhost:9001", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		panic(err)
 	}

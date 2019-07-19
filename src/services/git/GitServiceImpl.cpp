@@ -75,10 +75,7 @@ namespace nexus { namespace git {
 		GitRepo* repo = nullptr;
 		ReceivePackRequest request;
 		git_transfer_progress stats;
-		git_odb_writepack* wp = nullptr;
 		std::string newRepoPath(DEFAULT_REPO_PATH);
-		LOG_ARGS("ReceivePackStream request, repo name = %s", request.reponame().c_str())
-
 		while(reader->Read(&request)) {
 			if (repoOpen == false) {
 				LOG_ARGS("writing to repo %s...", request.reponame().c_str())
@@ -86,23 +83,25 @@ namespace nexus { namespace git {
 				repo = new GitRepo(newRepoPath);
 				msg = repo->Open(true);
 				if (msg != "success") { return Response(response, msg, false, StatusCode::INTERNAL); }
-			 	wp = repo->WritePack();
-			 	if (wp == nullptr) { return Response(response, "getting writepack funcptrs", false, StatusCode::INTERNAL); }
 				repoOpen = true;
 			}
-			errCode = wp->append(wp, request.data().data(), request.data().size(), &stats);
-			if (errCode > 0) {
+			msg = repo->PackAppend(request.data().data(), request.data().size(), &stats);
+			if (msg != "success") {
 				delete repo;
-				return Response(response, Common::CheckForError(errCode, "pack append"), false, StatusCode::INTERNAL);
+				return Response(response, msg, false, StatusCode::INTERNAL);
 			}
 		}
-		errCode = wp->commit(wp, &stats);
-		if (errCode > 0) {
+		if (repoOpen == true) {
+			msg = repo->PackCommit(&stats);
+			if (msg != "success") {
+				delete repo;
+				return Response(response, msg, false, StatusCode::INTERNAL);
+			}
 			delete repo;
-			return Response(response, Common::CheckForError(errCode, "pack commit"), false, StatusCode::INTERNAL);
+			return Response(response, "success", true, StatusCode::OK);
+		} else {
+			return Response(response, "the repo was not opened, pak file must have been empty", false, StatusCode::UNKNOWN);
 		}
-		delete repo;
-		return Response(response, "success", true, StatusCode::OK);
 	}
 	Status GitServiceImpl::UploadPackStream(ServerContext* context, const UploadPackRequest* request, ServerWriter<UploadPackResponse>* writer) {
 		return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");
@@ -144,6 +143,7 @@ namespace nexus { namespace git {
 		errCode = git_repository_set_head(repo, request->refname().c_str());
 		if (errCode != 0) { return Response(response, Common::CheckForError(errCode,"failed to set head"), false, StatusCode::INTERNAL); };
 
+		git_reference_free(newRef);
 		git_repository_free(repo);
 		return Response(response, "success", true, StatusCode::OK);
 	}

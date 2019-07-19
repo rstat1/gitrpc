@@ -84,7 +84,6 @@ func (server *GitServer) listRefs(resp http.ResponseWriter, enc *pktline.Encoder
 		refList.Capabilities.Add(capability.DeleteRefs)
 		refList.Capabilities.Add(capability.Agent, "devapp/0.0.1")
 		refList.Capabilities.Add(capability.ReportStatus)
-		refList.Capabilities.Add(capability.NoThin)
 
 		refs, _ := repo.References()
 
@@ -182,54 +181,106 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 			parsedRefNames = append(parsedRefNames, refName)
 			parsedRefs[refName] = lineParts[1]
 		}
-		enc.Encode([]byte("unpack ok\n"))
-
-		pak, err := ioutil.ReadAll(reader)
-		if err != nil {
-			panic(err)
+		if server.unbufferedWrite(reader, enc) == true {
+			server.writeReferences(enc, parsedRefNames, parsedRefs)
 		}
-		var chunk []byte
-		if len(pak) > 0 {
-			chunkSize := 64 * 1024
-			if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err == nil {
-				for currentByte := 0; currentByte < len(pak); currentByte += chunkSize {
-					if currentByte+chunkSize > len(pak) {
-						chunk = pak[currentByte:len(pak)]
-					} else {
-						chunk = pak[currentByte : currentByte+chunkSize]
-					}
+	}
+}
 
-					if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: chunk}); err != nil {
-						common.LogError("", err)
-						reader.Close()
-						break
-					}
+func (server *GitServer) unbufferedWrite(reader io.ReadCloser, enc *pktline.Encoder) bool {
+	var pakToWrite []byte
+	var wroteToStream bool
+	if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err != nil {
+		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+		enc.Encode(nil)
+		common.LogError("", err)
+		return false
+	} else {
+		chunkSize := 3 * 1024 * 1024
+		pak := make([]byte, chunkSize)
+		for {
+			if n, _ := reader.Read(pak); n != 0 {
+				if n < chunkSize {
+					pakToWrite = pak[0:n]
+				} else if n == chunkSize {
+					pakToWrite = pak
 				}
-				reader.Close()
-				resp, err := stream.CloseAndRecv()
-				common.LogDebug("resp", resp, "response")
-				if err != nil || resp.Success == false {
-					common.LogError("", err)
-				} else {
-					for _, ref := range parsedRefNames {
-						enc.Encode([]byte(fmt.Sprintf("ok %s\n", strings.TrimSuffix(ref, string([]byte{0})))))
-						_, e2 := server.rpc.WriteReference(context.Background(), &nexus.WriteReferenceRequest{
-							RepoName: server.CurrentRepo.RepoName,
-							RefName:  strings.TrimSuffix(ref, string([]byte{0})),
-							RefRev:   parsedRefs[ref],
-						})
-						common.LogError("", e2)
-					}
+				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: pakToWrite}); err != nil {
+					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+					enc.Encode(nil)
 				}
+				wroteToStream = true
+			} else {
+				common.LogDebug("", "", "reached the end")
+				break
 			}
 		}
+		reader.Close()
+		if wroteToStream {
+			common.LogInfo("", "", "finished write")
+			resp, err := stream.CloseAndRecv()
+			if err != nil || resp.Success == false {
+				common.LogError("", err)
+				return false
+			}
+			enc.Encode([]byte("unpack ok\n"))
+			enc.Encode(nil)
+		} else {
+			return false
+		}
+	}
+	return true
+}
 
-		// _, e := server.rpc.ReceivePack(context.Background(), &nexus.ReceivePackRequest{RepoName: server.CurrentRepo.RepoName, Data: pak}, grpc.FailFast(true))
-		// if e == nil {
-		// } else {
-		// 	common.LogError("", e)
-		// }
-
+func (server *GitServer) bufferedWrite(reader io.ReadCloser, enc *pktline.Encoder) bool {
+	pak, err := ioutil.ReadAll(reader)
+	if err != nil {
+		panic(err)
+	}
+	var chunk []byte
+	if len(pak) > 0 {
+		chunkSize := 64 * 1024
+		if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err == nil {
+			for currentByte := 0; currentByte < len(pak); currentByte += chunkSize {
+				if currentByte+chunkSize > len(pak) {
+					chunk = pak[currentByte:len(pak)]
+				} else {
+					chunk = pak[currentByte : currentByte+chunkSize]
+				}
+				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: chunk}); err != nil {
+					common.LogError("", err)
+					reader.Close()
+					break
+				}
+			}
+			reader.Close()
+			resp, err := stream.CloseAndRecv()
+			common.LogDebug("resp", resp, "response")
+			if err != nil || resp.Success == false {
+				common.LogError("", err)
+			} else {
+			}
+			enc.Encode([]byte("unpack ok\n"))
+			enc.Encode(nil)
+			return true
+		}
+		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
 		enc.Encode(nil)
+		return false
+	}
+	return false
+}
+func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []string, parsedRefs map[string]string) {
+	for _, ref := range parsedRefNames {
+		_, e2 := server.rpc.WriteReference(context.Background(), &nexus.WriteReferenceRequest{
+			RepoName: server.CurrentRepo.RepoName,
+			RefName:  strings.TrimSuffix(ref, string([]byte{0})),
+			RefRev:   parsedRefs[ref],
+		})
+		if common.LogError("", e2) != nil {
+			enc.Encode([]byte(fmt.Sprintf("ng %s %s\n", strings.TrimSuffix(ref, string([]byte{0})), e2.Error())))
+		} else {
+			enc.Encode([]byte(fmt.Sprintf("ok %s\n", strings.TrimSuffix(ref, string([]byte{0})))))
+		}
 	}
 }

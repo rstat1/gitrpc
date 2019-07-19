@@ -17,6 +17,8 @@ executable("nexus_git") {
         "app/AppImpl.cpp",
         "common/GRPC.h",
         "common/GRPC.cpp",
+        "services/git/GitRepo.h",
+        "services/git/GitRepo.cpp",
         "common/GitServiceCommon.h",
         "services/git/GitServiceImpl.h",
         "services/git/GitServiceImpl.cpp",

@@ -8,6 +8,7 @@
 #ifndef GITSVCCOM
 #define GITSVCCOM
 
+#include <git/git2.h>
 #include <protocols/generated/GitService.grpc.pb.h>
 
 namespace nexus { namespace common {
@@ -15,19 +16,22 @@ namespace nexus { namespace common {
 	#define SUCCESS std::function<void()>
 	#define REPO_PATH(name) std::string newRepoPath(DEFAULT_REPO_PATH);\
 							newRepoPath.append(name);
-	#define CHECK(func, msg, onsuccess) if (strcmp(this->CheckForError(func, msg), "") == 0) { \
-											onsuccess(); \
-											response->set_success(true); \
-											response->set_errormessage("Success!"); \
-									  } else {\
-											response->set_success(false); \
-											response->set_errormessage(msg); \
-											return Status(StatusCode::INTERNAL, msg);\
-									  }
 
-	#define OPEN_REPO(name) git_repository* repo; \
-							CFE(git_repository_open(&repo, this->ConvertRepoNameToPath(name)), \
-								"Failed to open repo");
+	class Common {
+		public:
+			static const char* CheckForError(int errCode, const char* message) {
+				const git_error* err;
+				if (errCode == 0) {	return ""; }
+				else {
+					err = giterr_last();
+					if (err != nullptr && err->message != NULL) {
+						LOG_ARGS("error %s: %s", message, err->message);
+						return err->message;
+					}
+				}
+				return "";
+		}
+	};
 }}
 
 #endif

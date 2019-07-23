@@ -8,15 +8,14 @@
 #ifndef GSIMPL
 #define GSIMPL
 
-#include <base/common.h>
 #include <grpcpp/server.h>
-#include <common/GitServiceCommon.h>
-
 #include <grpcpp/support/server_interceptor.h>
+
+#include <base/common.h>
+#include <common/GitServiceCommon.h>
 
 namespace nexus { namespace git {
 	using namespace grpc;
-	using namespace nexus::common;
 	using namespace google::protobuf;
 
 	class GitServiceImpl : public GitService::Service {
@@ -45,7 +44,7 @@ namespace nexus { namespace git {
 		public:
 			GitServiceInterceptor(grpc::experimental::ServerRpcInfo* info) : info(info) { LOG_MSG("created interceptor"); }
 			void Intercept(grpc::experimental::InterceptorBatchMethods* methods) override {
-				LOG_ARGS("method: %s", info->method());
+				// LOG_ARGS("method: %s", info->method());
 				methods->Proceed();
 			}
 		private:

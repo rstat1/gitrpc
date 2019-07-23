@@ -8,51 +8,59 @@
 #include <thread>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <base/Utils.h>
-#include <common/GRPC.h>
+
 #include <grpcpp/server.h>
 #include <grpc++/grpc++.h>
+#include <grpcpp/resource_quota.h>
+
+#include <base/Utils.h>
+#include <common/GRPC.h>
 #include <services/git/GitServiceImpl.h>
+#include <services/git/GitServiceAsyncImpl.h>
 
 namespace nexus { namespace common {
 	using namespace grpc;
+	using namespace nexus::git;
 	using namespace base::utils;
 	SINGLETON_DEF(GRPCServer);
-	void GRPCServer::CreateGRPCServer() {
-		unlink(SERVER_SOCKET);
+	void GRPCServer::CreateGRPCServerInternal(std::string addr) {
 		std::thread serverThread([&] {
-			nexus::git::GitServiceImpl* gitSvc = new nexus::git::GitServiceImpl();
-			gitSvc->InitGitService();
-			std::string address("unix:");
-			address.append(SERVER_SOCKET);
-			if (CreateUnixSocket(SERVER_SOCKET)) {
-				ServerBuilder builder;
-				builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-				builder.RegisterService(gitSvc);
-				this->server = builder.BuildAndStart();
-				server->Wait();
-			} else {
-				LOG_MSG("failed to CreateUnixSocket");
-				exit(0);
-			}
-		});
-		serverThread.detach();
-	}
-	void GRPCServer::CreateHTTPGRPCServer() {
-		std::thread serverThread([&] {
-			std::string serverAddr("0.0.0.0:9001");
-			nexus::git::GitServiceImpl* gitSvc = new nexus::git::GitServiceImpl();
-			gitSvc->InitGitService();
+			GitService::AsyncService svc;
+			GitServiceAsyncImpl* asyncSvc = new GitServiceAsyncImpl(&svc);
 			ServerBuilder builder;
-			builder.AddListeningPort(serverAddr, grpc::InsecureServerCredentials());
-			// builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
-			builder.RegisterService(gitSvc);
+			builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
+
+			writeRefQueue = builder.AddCompletionQueue();
+			receivePackQueue = builder.AddCompletionQueue();
+			recvPackStreamQueue = builder.AddCompletionQueue();
+
+			builder.RegisterService(&svc);
 			this->server = builder.BuildAndStart();
+			SetupAsyncHandler(asyncSvc);
+
 			server->Wait();
 		});
 		serverThread.detach();
 	}
-	void GRPCServer::RegisterService(grpc::Service* service) {
-		this->services.push_back(service);
+	void GRPCServer::CreateGRPCServer() {
+		unlink(SERVER_SOCKET);
+		std::string address("unix:");
+		address.append(SERVER_SOCKET);
+		if (CreateUnixSocket(SERVER_SOCKET)) {
+			CreateGRPCServerInternal(address);
+		} else {
+			LOG_MSG("failed to CreateUnixSocket");
+			exit(0);
+		}
 	}
+	void GRPCServer::CreateHTTPGRPCServer() {
+		std::string serverAddr("0.0.0.0:9001");
+		CreateGRPCServerInternal(serverAddr);
+	}
+	void GRPCServer::SetupAsyncHandler(GitServiceAsyncImpl* service) {
+		service->HandleReceivePack(receivePackQueue.get());
+		service->HandleWriteReference(writeRefQueue.get());
+		service->HandleRecvPackStream(recvPackStreamQueue.get());
+	}
+
 }}

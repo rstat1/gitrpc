@@ -9,7 +9,8 @@ service GitService {
     rpc ListRefsForClone(ListRefsRequest) returns (ListRefsResponse) {}
     rpc UploadPack(UploadPackRequest) returns (UploadPackResponse) {}
     rpc WriteReference(WriteReferenceRequest) returns (GenericResponse) {}
-    rpc ReceivePackStream(stream ReceivePackRequest) returns (GenericResponse) {}
+    rpc ReceivePack(ReceivePackRequest) returns (GenericResponse) {}
+    rpc ReceivePackStream (stream ReceivePackRequest) returns (stream GenericResponse) {}
     rpc UploadPackStream(UploadPackRequest) returns (stream UploadPackResponse) {}
 }
 

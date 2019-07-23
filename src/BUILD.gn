@@ -1,4 +1,4 @@
-executable("nexus_git") {
+executable("gitrpc-server") {
     deps = [
         "//src/base:base",
         "//external:external",
@@ -22,5 +22,13 @@ executable("nexus_git") {
         "common/GitServiceCommon.h",
         "services/git/GitServiceImpl.h",
         "services/git/GitServiceImpl.cpp",
+        "services/git/GitServiceAsyncImpl.h",
+        "services/git/GitServiceAsyncImpl.cpp",
+        "services/git/requests/ReceivePack.h",
+        "services/git/requests/ReceivePack.cpp",
+        "services/git/requests/RecvPackStream.h",
+        "services/git/requests/RecvPackStream.cpp",
+        "services/git/requests/WriteReference.h",
+        "services/git/requests/WriteReference.cpp",
     ]
 }

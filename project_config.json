@@ -1,5 +1,5 @@
 {
-	"name": "nexus_git",
+	"name": "gitrpc-server",
 	"namespace": "nexus",
 	"start_date": {
 		"month": 7,

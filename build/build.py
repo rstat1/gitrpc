@@ -15,6 +15,7 @@ from distutils.dir_util import copy_tree
 global arch, ClientID, ClientKey, URLPrefix, WSURLPrefix, currentOS, binDeps, projectName
 global startMonth, startDay, startYear
 
+buildType = ""
 path = os.path.abspath(os.path.split(__file__)[0])
 outputDir = ""
 
@@ -45,9 +46,13 @@ if (os.path.exists(os.getcwd() + '/project_config.json') == False):
         exit(1)
 
 def InitBuildEnv():
-        global buildDir, arch, currentOS, ClientID, ClientKey, URLPrefix, WSURLPrefix
-        GNCmd = "build/gn gen "
+        global buildDir, arch, currentOS, ClientID, ClientKey, URLPrefix, WSURLPrefix, buildType
         buildDir = os.getcwd()
+        GNCmd = "build/gn gen "
+        if len(sys.argv) > 1 and sys.argv[1] == "release":
+                buildType = "release"
+        else:
+                buildType = "debug"
         if os.environ.has_key("TARGET_ARCH"):
                 arch = os.environ["TARGET_ARCH"]
         else:
@@ -61,7 +66,7 @@ def InitBuildEnv():
                 currentOS = "win"
         GNCmd += "out-" + arch
         ReadBuildConfig()
-        PrintMessage("Building " + projectName, False)
+        PrintMessage("Building '" + projectName + "' (" + arch + "/" + buildType + ")", False)
         subprocess.check_call(GNCmd, shell=True)
         if os.path.exists(os.getcwd() + '/service-details.json'):
                 with open(os.getcwd() + '/service-details.json', 'r') as details:
@@ -118,10 +123,15 @@ def SetSteamLinkEnvVars():
                       argsFile.write('target_sysroot = "' + os.environ["MARVELL_ROOTFS"] + '"')
 
 def WriteX64GNFlags():
+        global buildType
+        print buildType
         if not os.path.exists('out-x86_64'):
                 os.makedirs('out-x86_64')
         with open('out-x86_64/args.gn', 'w+') as argsFile:
-                argsFile.write('is_clang = true')
+                argsFile.write('is_clang = true\n')
+                if buildType == "release":
+                        argsFile.write('is_official_build = true\n')
+                        argsFile.write('is_debug = false')
 
 def GetServiceDetails():
         global ClientID, ClientKey, URLPrefix, WSURLPrefix, rootNamespace

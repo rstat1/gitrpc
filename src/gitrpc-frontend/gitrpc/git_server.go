@@ -4,10 +4,10 @@ import (
 	context "context"
 	fmt "fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 
 	"git.m/devapp/common"
@@ -93,7 +93,7 @@ func (server *GitServer) listRefs(resp http.ResponseWriter, enc *pktline.Encoder
 		})
 		refList.Encode(resp)
 	} else {
-		common.Logger.Errorln(fmt.Sprintf("listrefs error: %s", err.Error()))
+		common.LogError("", fmt.Errorf("listrefs error: %s", err.Error()))
 	}
 }
 func (server *GitServer) getRepoName(requestURL string) string {
@@ -136,7 +136,7 @@ func (server *GitServer) getRequestHandler(request *http.Request, resp http.Resp
 	enc.Encode([]byte(fmt.Sprintf("# service=%s\n", serviceName)))
 	enc.Encode(nil)
 
-	common.Logger.Debugln(serviceName)
+	common.LogDebug("", "", serviceName)
 	switch serviceName {
 	// case "git-upload-pack":
 	// 		server.listRefsForClone(resp, enc)
@@ -171,23 +171,24 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 	if err := decoder.DecodeUntilFlush(&lines); err == nil {
 		for _, line := range lines {
 			lineStr = string(line)
-			common.Logger.Debugln(lineStr)
+			common.LogDebug("", "", lineStr)
 			lineParts = strings.Split(lineStr, " ")
 			if len(lineParts) < 3 {
-				common.Logger.Warnln("less than 3 parts")
+				common.LogWarn("", "", "less than 3 parts")
 				continue
 			}
 			refName := strings.TrimSuffix(lineParts[2], string("\x00"))
 			parsedRefNames = append(parsedRefNames, refName)
 			parsedRefs[refName] = lineParts[1]
 		}
-		if server.unbufferedWrite(reader, enc) == true {
+		if server.unbufferedWriteStream(reader, enc) == true {
 			server.writeReferences(enc, parsedRefNames, parsedRefs)
 		}
 	}
+	runtime.GC()
 }
 
-func (server *GitServer) unbufferedWrite(reader io.ReadCloser, enc *pktline.Encoder) bool {
+func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktline.Encoder) bool {
 	var pakToWrite []byte
 	var wroteToStream bool
 	if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err != nil {
@@ -196,8 +197,9 @@ func (server *GitServer) unbufferedWrite(reader io.ReadCloser, enc *pktline.Enco
 		common.LogError("", err)
 		return false
 	} else {
-		chunkSize := 3 * 1024 * 1024
+		chunkSize := 1 * 1024 * 1024
 		pak := make([]byte, chunkSize)
+
 		for {
 			if n, _ := reader.Read(pak); n != 0 {
 				if n < chunkSize {
@@ -208,66 +210,116 @@ func (server *GitServer) unbufferedWrite(reader io.ReadCloser, enc *pktline.Enco
 				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: pakToWrite}); err != nil {
 					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
 					enc.Encode(nil)
+					common.LogError("", err)
+				} else {
+
+					if resp, err := stream.Recv(); err != nil || resp.Success == false {
+						common.LogError("", err)
+						return false
+					} else {
+						// common.LogDebug("", "", resp.GetErrorMessage())
+					}
+					// common.LogInfo("", "", "finished write")
+					wroteToStream = true
 				}
-				wroteToStream = true
+				// go func() bool {
+					// return true
+				// }()
 			} else {
-				common.LogDebug("", "", "reached the end")
+				// common.LogDebug("", "", "reached the end")
 				break
 			}
 		}
-		reader.Close()
+		if e := stream.CloseSend(); err != nil {
+			enc.Encode([]byte(fmt.Sprintf("unpack %s\n", e.Error())))
+			enc.Encode(nil)
+			return false
+		} else {
+			// common.LogDebug("", "", "reached the end")
+		}
 		if wroteToStream {
-			common.LogInfo("", "", "finished write")
-			resp, err := stream.CloseAndRecv()
-			if err != nil || resp.Success == false {
-				common.LogError("", err)
-				return false
-			}
 			enc.Encode([]byte("unpack ok\n"))
 			enc.Encode(nil)
 		} else {
 			return false
 		}
+		reader.Close()
 	}
 	return true
 }
 
-func (server *GitServer) bufferedWrite(reader io.ReadCloser, enc *pktline.Encoder) bool {
-	pak, err := ioutil.ReadAll(reader)
-	if err != nil {
-		panic(err)
-	}
-	var chunk []byte
-	if len(pak) > 0 {
-		chunkSize := 64 * 1024
-		if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err == nil {
-			for currentByte := 0; currentByte < len(pak); currentByte += chunkSize {
-				if currentByte+chunkSize > len(pak) {
-					chunk = pak[currentByte:len(pak)]
-				} else {
-					chunk = pak[currentByte : currentByte+chunkSize]
-				}
-				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: chunk}); err != nil {
-					common.LogError("", err)
-					reader.Close()
-					break
-				}
+func (server *GitServer) unbufferedWriteNoStream(reader io.ReadCloser, enc *pktline.Encoder) bool {
+	var pakToWrite []byte
+	var wroteToStream bool
+	chunkSize := 2 * 1024 * 1024
+	pak := make([]byte, chunkSize)
+	for {
+		if n, _ := reader.Read(pak); n != 0 {
+			if n < chunkSize {
+				pakToWrite = pak[0:n]
+			} else if n == chunkSize {
+				pakToWrite = pak
 			}
-			reader.Close()
-			resp, err := stream.CloseAndRecv()
-			common.LogDebug("resp", resp, "response")
-			if err != nil || resp.Success == false {
+			msg := nexus.ReceivePackRequest{RepoName: "new-server", Data: pakToWrite}
+			if r, err := server.rpc.ReceivePack(context.Background(), &msg, grpc.FailFast(true)); err != nil || r.GetSuccess() == false {
+				enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+				enc.Encode(nil)
 				common.LogError("", err)
-			} else {
+				return false
 			}
-			enc.Encode([]byte("unpack ok\n"))
-			enc.Encode(nil)
-			return true
+			wroteToStream = true
+		} else {
+			common.LogDebug("", "", "reached the end")
+			break
 		}
-		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+	}
+	if wroteToStream {
+		common.LogInfo("", "", "finished write")
+		enc.Encode([]byte("unpack ok\n"))
 		enc.Encode(nil)
+	} else {
 		return false
 	}
+	reader.Close()
+	return true
+}
+
+func (server *GitServer) bufferedWrite(reader io.ReadCloser, enc *pktline.Encoder) bool {
+	// pak, err := ioutil.ReadAll(reader)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// var chunk []byte
+	// if len(pak) > 0 {
+	// 	chunkSize := 64 * 1024
+	// 	if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err == nil {
+	// 		for currentByte := 0; currentByte < len(pak); currentByte += chunkSize {
+	// 			if currentByte+chunkSize > len(pak) {
+	// 				chunk = pak[currentByte:len(pak)]
+	// 			} else {
+	// 				chunk = pak[currentByte : currentByte+chunkSize]
+	// 			}
+	// 			if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: chunk}); err != nil {
+	// 				common.LogError("", err)
+	// 				reader.Close()
+	// 				break
+	// 			}
+	// 		}
+	// 		reader.Close()
+	// 		resp, err := stream.CloseAndRecv()
+	// 		common.LogDebug("resp", resp, "response")
+	// 		if err != nil || resp.Success == false {
+	// 			common.LogError("", err)
+	// 		} else {
+	// 		}
+	// 		enc.Encode([]byte("unpack ok\n"))
+	// 		enc.Encode(nil)
+	// 		return true
+	// 	}
+	// 	enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+	// 	enc.Encode(nil)
+	// 	return false
+	// }
 	return false
 }
 func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []string, parsedRefs map[string]string) {
@@ -284,3 +336,6 @@ func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []
 		}
 	}
 }
+
+/*
+ */

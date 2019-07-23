@@ -9,7 +9,6 @@
 #include <services/git/GitRepo.h>
 
 namespace nexus { namespace git {
-	using namespace nexus::common;
 	GitRepo::GitRepo(std::string name) {
 		repoName = name;
 	}

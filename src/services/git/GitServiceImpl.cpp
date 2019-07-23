@@ -20,7 +20,6 @@
 
 namespace nexus { namespace git {
 	using namespace base::utils;
-	using namespace nexus::common;
 	using namespace std::placeholders;
 	SINGLETON_DEF(GitServiceImpl);
 
@@ -69,39 +68,42 @@ namespace nexus { namespace git {
 		return Status::OK;
 	}
 	Status GitServiceImpl::ReceivePackStream(ServerContext* context, ServerReader<ReceivePackRequest>* reader, GenericResponse* response) {
-		int errCode;
-		const char* msg;
-		bool repoOpen = false;
-		GitRepo* repo = nullptr;
-		ReceivePackRequest request;
-		git_transfer_progress stats;
-		std::string newRepoPath(DEFAULT_REPO_PATH);
-		while(reader->Read(&request)) {
-			if (repoOpen == false) {
-				LOG_ARGS("writing to repo %s...", request.reponame().c_str())
-				newRepoPath.append(request.reponame());
-				repo = new GitRepo(newRepoPath);
-				msg = repo->Open(true);
-				if (msg != "success") { return Response(response, msg, false, StatusCode::INTERNAL); }
-				repoOpen = true;
-			}
-			msg = repo->PackAppend(request.data().data(), request.data().size(), &stats);
-			if (msg != "success") {
-				delete repo;
-				return Response(response, msg, false, StatusCode::INTERNAL);
-			}
-		}
-		if (repoOpen == true) {
-			msg = repo->PackCommit(&stats);
-			if (msg != "success") {
-				delete repo;
-				return Response(response, msg, false, StatusCode::INTERNAL);
-			}
-			delete repo;
-			return Response(response, "success", true, StatusCode::OK);
-		} else {
-			return Response(response, "the repo was not opened, pak file must have been empty", false, StatusCode::UNKNOWN);
-		}
+	// 	int errCode;
+	// 	const char* msg;
+	// 	bool repoOpen = false;
+	// 	GitRepo* repo = nullptr;
+	// 	ReceivePackRequest request;
+	// 	git_transfer_progress stats;
+	// 	std::string newRepoPath(DEFAULT_REPO_PATH);
+	// 	while(reader->Read(&request)) {
+	// 		if (repoOpen == false) {
+	// 			LOG_ARGS("writing to repo %s...", request.reponame().c_str())
+	// 			newRepoPath.append(request.reponame());
+	// 			repo = new GitRepo(newRepoPath);
+	// 			msg = repo->Open(true);
+	// 			if (msg != "success") { return Response(response, msg, false, StatusCode::INTERNAL); }
+	// 			repoOpen = true;
+	// 		}
+	// 		msg = repo->PackAppend(request.data().data(), request.data().size(), &stats);
+	// 		if (msg != "success") {
+	// 			delete repo;
+	// 			return Response(response, msg, false, StatusCode::INTERNAL);
+	// 		}
+	// 	}
+	// 	if (repoOpen == true) {
+	// 		msg = repo->PackCommit(&stats);
+	// 		if (msg != "success") {
+	// 			delete repo;
+	// 			delete request.release_data();
+	// 			return Response(response, msg, false, StatusCode::INTERNAL);
+	// 		}
+	// 		delete repo;
+	// 		delete request.release_data();
+	// 		return Response(response, "success", true, StatusCode::OK);
+	// 	} else {
+	// 		return Response(response, "the repo was not opened, pak file must have been empty", false, StatusCode::UNKNOWN);
+	// 	}
+	return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");
 	}
 	Status GitServiceImpl::UploadPackStream(ServerContext* context, const UploadPackRequest* request, ServerWriter<UploadPackResponse>* writer) {
 		return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");
@@ -158,6 +160,9 @@ namespace nexus { namespace git {
 		const char* refName = git_reference_name(ref);
 		GitReference* refInfo = resp->add_refs();
 		refInfo->set_referencename(refName);
+
+		git_reference_free(ref);
+
 		return 0;
 	}
 	Status GitServiceImpl::Response(GenericResponse* resp, const char* msg, bool success, StatusCode status) {

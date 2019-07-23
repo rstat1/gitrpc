@@ -62,7 +62,10 @@
 			"tuple": "cpp",
 			"typeinfo": "cpp",
 			"utility": "cpp",
-			"algorithm": "cpp"
+			"algorithm": "cpp",
+			"codecvt": "cpp",
+			"iomanip": "cpp",
+			"numeric": "cpp"
 		}
 	}
 }

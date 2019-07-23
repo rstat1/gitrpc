@@ -6,6 +6,6 @@ group("libs") {
 }
 group("apps") {
     deps = [
-        "//src:nexus_git"
+        "//src:gitrpc-server"
     ]
 }

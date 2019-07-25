@@ -197,7 +197,7 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 		common.LogError("", err)
 		return false
 	} else {
-		chunkSize := 1 * 1024 * 1024
+		chunkSize := 2 * 1024 * 1024
 		pak := make([]byte, chunkSize)
 
 		for {
@@ -216,17 +216,11 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 					if resp, err := stream.Recv(); err != nil || resp.Success == false {
 						common.LogError("", err)
 						return false
-					} else {
-						// common.LogDebug("", "", resp.GetErrorMessage())
 					}
-					// common.LogInfo("", "", "finished write")
 					wroteToStream = true
 				}
-				// go func() bool {
-					// return true
-				// }()
+
 			} else {
-				// common.LogDebug("", "", "reached the end")
 				break
 			}
 		}
@@ -234,8 +228,6 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 			enc.Encode([]byte(fmt.Sprintf("unpack %s\n", e.Error())))
 			enc.Encode(nil)
 			return false
-		} else {
-			// common.LogDebug("", "", "reached the end")
 		}
 		if wroteToStream {
 			enc.Encode([]byte("unpack ok\n"))
@@ -325,7 +317,7 @@ func (server *GitServer) bufferedWrite(reader io.ReadCloser, enc *pktline.Encode
 func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []string, parsedRefs map[string]string) {
 	for _, ref := range parsedRefNames {
 		_, e2 := server.rpc.WriteReference(context.Background(), &nexus.WriteReferenceRequest{
-			RepoName: server.CurrentRepo.RepoName,
+			RepoName: "new-server",//server.CurrentRepo.RepoName,
 			RefName:  strings.TrimSuffix(ref, string([]byte{0})),
 			RefRev:   parsedRefs[ref],
 		})

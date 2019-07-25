@@ -20,6 +20,7 @@ namespace nexus { namespace git {
 			~GitRepo();
 			const char* Open(bool bare);
 			const char* PackCommit(git_transfer_progress *stats);
+			const char* CreateReference(const char* refRev, const char* refName);
 			const char* PackAppend(const void *data, size_t size, git_transfer_progress *stats);
 
             static int TransferProgressCB(const git_transfer_progress *stats, void *payload);
@@ -30,6 +31,8 @@ namespace nexus { namespace git {
 			std::string repoName;
 			git_repository* repo;
 			git_odb_writepack* wp;
+			git_transfer_progress tStats;
+
 	};
 }}
 

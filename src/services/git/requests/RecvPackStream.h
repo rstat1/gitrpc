@@ -14,6 +14,7 @@
 #include <common/GitServiceCommon.h>
 
 namespace nexus { namespace git {
+	class GitRepo;
 	using namespace grpc;
 	class RecvPackStream {
 		public:
@@ -28,16 +29,19 @@ namespace nexus { namespace git {
 				public:
 					Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
 					bool ProcessRequest(RequestStatus status);
+					void FinishRequest();
 					RequestStatus status;
 				private:
 					void ReadMessage();
 					void WriteResponse();
 
+					GitRepo* current;
+					bool isRunning = true;
 					ServerContext context;
 					ReceivePackRequest msg;
-					bool isRunning = true;
 					ServerCompletionQueue* queue;
 					nexus::GitService::AsyncService* svc;
+					gitrpc::common::CommonResponseInfo* resp;
 					std::unique_ptr<ServerAsyncReaderWriter<GenericResponse, ReceivePackRequest>> sarw;
 			};
 	};

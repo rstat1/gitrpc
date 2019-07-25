@@ -15,16 +15,18 @@
 #define HANDLER(name) void GitServiceAsyncImpl::Handle##name(ServerCompletionQueue* queue) { (new name(gitService, queue))->StartHandlerThread(); }
 
 namespace nexus { namespace git {
-    using namespace grpc;
-    class GitServiceAsyncImpl {
-        public:
-            GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {}
-            HANDLER_DEF(ReceivePack);
-            HANDLER_DEF(WriteReference);
-            HANDLER_DEF(RecvPackStream);
-        private:
-            GitService::AsyncService* gitService;
-    };
+	using namespace grpc;
+	class GitServiceAsyncImpl {
+		public:
+			GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {
+		  		git_libgit2_init();
+			}
+			HANDLER_DEF(ReceivePack);
+			HANDLER_DEF(WriteReference);
+			HANDLER_DEF(RecvPackStream);
+		private:
+			GitService::AsyncService* gitService;
+	};
 }}
 
 #endif

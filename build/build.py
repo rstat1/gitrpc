@@ -16,8 +16,8 @@ global arch, ClientID, ClientKey, URLPrefix, WSURLPrefix, currentOS, binDeps, pr
 global startMonth, startDay, startYear
 
 buildType = ""
-path = os.path.abspath(os.path.split(__file__)[0])
 outputDir = ""
+path = os.path.abspath(os.path.split(__file__)[0])
 
 #TODO: Switch from dev to prod with a cmdline switch?
 #TODO: Load the following values from a file to maybe make all this more generic.
@@ -77,11 +77,22 @@ def InitBuildEnv():
                         WSURLPrefix = info["WSURLPrefix"]
 
 def PrintMessage(msg, newLineBefore):
+        i = 0;
+        currentBorder = "==========================="
+        if len(msg) > 27:
+                i = len(msg) - 27;
+        i += 5
+        if i > 0:
+                while i > 0:
+                        currentBorder += "="
+                        i -= 1
+
         if newLineBefore:
                 print ''
-        print bcolors.OKGREEN + "==========================="
-        print msg
-        print '==========================='
+        print bcolors.OKGREEN
+        print currentBorder
+        print '  ' + msg
+        print currentBorder
         print bcolors.ENDC
 
 def ReadBuildConfig():

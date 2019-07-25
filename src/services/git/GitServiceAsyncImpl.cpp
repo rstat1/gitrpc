@@ -13,7 +13,7 @@
 #include <services/git/requests/RecvPackStream.h>
 
 namespace nexus { namespace git {
-    HANDLER(ReceivePack)
-    HANDLER(WriteReference)
-    HANDLER(RecvPackStream)
+	HANDLER(ReceivePack)
+	HANDLER(WriteReference)
+	HANDLER(RecvPackStream)
 }}

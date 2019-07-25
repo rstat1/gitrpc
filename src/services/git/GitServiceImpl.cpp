@@ -21,6 +21,8 @@
 namespace nexus { namespace git {
 	using namespace base::utils;
 	using namespace std::placeholders;
+	using namespace gitrpc::common;
+
 	SINGLETON_DEF(GitServiceImpl);
 
 	void GitServiceImpl::InitGitService() {
@@ -68,42 +70,42 @@ namespace nexus { namespace git {
 		return Status::OK;
 	}
 	Status GitServiceImpl::ReceivePackStream(ServerContext* context, ServerReader<ReceivePackRequest>* reader, GenericResponse* response) {
-	// 	int errCode;
-	// 	const char* msg;
-	// 	bool repoOpen = false;
-	// 	GitRepo* repo = nullptr;
-	// 	ReceivePackRequest request;
-	// 	git_transfer_progress stats;
-	// 	std::string newRepoPath(DEFAULT_REPO_PATH);
-	// 	while(reader->Read(&request)) {
-	// 		if (repoOpen == false) {
-	// 			LOG_ARGS("writing to repo %s...", request.reponame().c_str())
-	// 			newRepoPath.append(request.reponame());
-	// 			repo = new GitRepo(newRepoPath);
-	// 			msg = repo->Open(true);
-	// 			if (msg != "success") { return Response(response, msg, false, StatusCode::INTERNAL); }
-	// 			repoOpen = true;
-	// 		}
-	// 		msg = repo->PackAppend(request.data().data(), request.data().size(), &stats);
-	// 		if (msg != "success") {
-	// 			delete repo;
-	// 			return Response(response, msg, false, StatusCode::INTERNAL);
-	// 		}
-	// 	}
-	// 	if (repoOpen == true) {
-	// 		msg = repo->PackCommit(&stats);
-	// 		if (msg != "success") {
-	// 			delete repo;
-	// 			delete request.release_data();
-	// 			return Response(response, msg, false, StatusCode::INTERNAL);
-	// 		}
-	// 		delete repo;
-	// 		delete request.release_data();
-	// 		return Response(response, "success", true, StatusCode::OK);
-	// 	} else {
-	// 		return Response(response, "the repo was not opened, pak file must have been empty", false, StatusCode::UNKNOWN);
-	// 	}
-	return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");
+		int errCode;
+		const char* msg;
+		bool repoOpen = false;
+		GitRepo* repo = nullptr;
+		ReceivePackRequest request;
+		git_transfer_progress stats;
+		std::string newRepoPath(DEFAULT_REPO_PATH);
+		while(reader->Read(&request)) {
+			if (repoOpen == false) {
+				LOG_ARGS("writing to repo %s...", request.reponame().c_str())
+				newRepoPath.append(request.reponame());
+				repo = new GitRepo(newRepoPath);
+				msg = repo->Open(true);
+				if (msg != "success") { return Response(response, msg, false, StatusCode::INTERNAL); }
+				repoOpen = true;
+			}
+			msg = repo->PackAppend(request.data().data(), request.data().size(), &stats);
+			if (msg != "success") {
+				delete repo;
+				return Response(response, msg, false, StatusCode::INTERNAL);
+			}
+		}
+		if (repoOpen == true) {
+			msg = repo->PackCommit(&stats);
+			if (msg != "success") {
+				delete repo;
+				delete request.release_data();
+				return Response(response, msg, false, StatusCode::INTERNAL);
+			}
+			delete repo;
+			delete request.release_data();
+			return Response(response, "success", true, StatusCode::OK);
+		} else {
+			return Response(response, "the repo was not opened, pak file must have been empty", false, StatusCode::UNKNOWN);
+		}
+		// return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");
 	}
 	Status GitServiceImpl::UploadPackStream(ServerContext* context, const UploadPackRequest* request, ServerWriter<UploadPackResponse>* writer) {
 		return Status(StatusCode::UNIMPLEMENTED, "Work in progress under construction");

@@ -5,16 +5,17 @@
 * found in the included LICENSE file.
 */
 
-#include <grpcpp/alarm.h>
+#include <services/git/GitRepo.h>
 #include <services/git/requests/RecvPackStream.h>
 
 namespace nexus { namespace git {
+	using namespace gitrpc::common;
     void RecvPackStream::StartHandlerThread() {
 		requestHandler.reset(new std::thread(std::bind(&RecvPackStream::HandlerThread, this)));
 	}
     void RecvPackStream::HandlerThread() {
+		LOG_MSG("init libgit");
 		bool ok = false;
-		grpc::Alarm alarm;
 		void* tag = nullptr;
 		bool requeue = false;
 		RequestStatus last;
@@ -27,11 +28,6 @@ namespace nexus { namespace git {
 				delete req;
 				req = new RecvPackStream::Request(svc, queue);
 			}
-			if (last == RequestStatus::FINISH) {
-				LOG_MSG("hello")
-				req = new RecvPackStream::Request(svc, queue);
-			}
-
         }
     }
     RecvPackStream::Request::Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) {
@@ -58,50 +54,69 @@ namespace nexus { namespace git {
 			case RequestStatus::DONE:
 				LOG_MSG("done")
 				isRunning = false;
-				sarw->Finish(Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
+				sarw->Finish(resp->requestStatus, reinterpret_cast<void*>(RequestStatus::FINISH));
+				delete resp;
 				break;
 			case RequestStatus::FINISH:
 				LOG_MSG("finish")
-				delete this;
+				// delete this;
 				break;
 		}
         return false;
     }
+	void RecvPackStream::Request::FinishRequest() {
+		sarw->Finish(Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
+	}
 	void RecvPackStream::Request::WriteResponse() {
 		nexus::GenericResponse r;
+
 		r.set_errormessage("Success");
 		r.set_success(true);
-		sarw->Write(r, reinterpret_cast<void*>(RequestStatus::WRITE));
+
+		if (resp == nullptr) {
+			if (current != nullptr) {
+				const char* err = current->PackCommit(nullptr);
+				if (err != "success") {
+					LOG_REL_A("failed to commit pack data: %s", err)
+					resp = Common::Response(err, false, StatusCode::INTERNAL);
+					sarw->Write(*resp->response, reinterpret_cast<void*>(RequestStatus::DONE));
+					delete current;
+				} else {
+					sarw->Write(r, reinterpret_cast<void*>(RequestStatus::WRITE));
+				}
+				delete current;
+			} else {
+				sarw->Write(r, reinterpret_cast<void*>(RequestStatus::WRITE));
+			}
+		} else {
+			sarw->Write(*resp->response, reinterpret_cast<void*>(RequestStatus::DONE));
+		}
 		LOG_MSG("write")
 	}
 	void RecvPackStream::Request::ReadMessage() {
+		const char* err;
+		git_transfer_progress stats;
 		if (isRunning) {
 			sarw->Read(&msg, reinterpret_cast<void*>(RequestStatus::READ));
-			LOG_ARGS("read %i", msg.data().size())
+
+			if (msg.data().size() > 0) {
+				LOG_ARGS("read %i", msg.data().size())
+				current = new GitRepo(msg.reponame());
+				err = current->Open(true);
+				if (err != "success") {
+					LOG_REL_A("failed to open repo: %s", err)
+					resp = Common::Response(err, false, StatusCode::INTERNAL);
+					delete current;
+					return;
+				}
+				err = current->PackAppend(msg.data().data(), msg.data().size(), &stats);
+				if (err != "success") {
+					LOG_REL_A("failed to write pack data: %s", err)
+					resp = Common::Response(err, false, StatusCode::INTERNAL);
+					delete current;
+					return;
+				}
+			}
 		}
 	}
 }}
-        // grpc::Alarm alarm;
-		// if (status == RequestStatus::CONNECT) {
-		// 	// LOG_ARGS("%p connect", this);
-		// 	status = RequestStatus::READ;
-		// } else if (status == RequestStatus::READ) {
-		// 	// LOG_ARGS("%p read", this);
-		// 	reader->Read(&msg, this);
-		// 	status = RequestStatus::DONE;
-		// 	return false;
-		// 	// new ReceivePack(svc, queue);//gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME)
-
-		// } else if (status == RequestStatus::DONE) {
-		// 	// LOG_ARGS("%p done", this)
-		// 	if (!notifiedDone) {
-		// 		// LOG_ARGS("%p notifiedDone = false", this)
-		// 		notifiedDone = true;
-		// 		status = RequestStatus::CONNECT;
-		// 		Cleanup();
-		// 	} else {
-		// 		// LOG_ARGS("%p done yet.", this)
-		// 	}
-		// }
-		// if (status == RequestStatus::DONE) { alarm.Set(queue, gpr_time_0(gpr_clock_type::GPR_CLOCK_REALTIME), this); }
-		// return true;

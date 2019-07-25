@@ -6,9 +6,12 @@
 */
 
 #include <thread>
+
+#include <services/git/GitRepo.h>
 #include <services/git/requests/WriteReference.h>
 
 namespace nexus { namespace git {
+	using namespace gitrpc::common;
 	void WriteReference::StartHandlerThread() {
 		requestHandler.reset(new std::thread(std::bind(&WriteReference::HandlerThread, this)));
 	}
@@ -42,12 +45,43 @@ namespace nexus { namespace git {
 		} else if (status == RequestStatus::READ) {
 			LOG_ARGS("refname %s", request.refname().c_str());
 			new Request(svc, queue);
-			nexus::GenericResponse r;
-			r.set_errormessage("success");
-			r.set_success(true);
-			resp->Finish(r, Status(StatusCode::OK, "Success"), this);
+			Read();
 			status = RequestStatus::DONE;
 		}
 		return true;
+	}
+	void WriteReference::Request::Read() {
+		int errCode;
+		const char* err;
+		git_oid objectID;
+		GitRepo* repo = new GitRepo(request.reponame());
+
+		LOG_ARGS("add ref %s with hash = %s to repo %s", request.refname().c_str(), request.refrev().c_str(), request.reponame().c_str());
+
+		err = repo->Open(true);
+		if (err != "success") {
+			WriteError(err);
+			return;
+		}
+		err = repo->CreateReference(request.refrev().c_str(), request.refname().c_str());
+		if (err != "success") {
+			WriteError(err);
+			return;
+		}
+		Write();
+		delete repo;
+	}
+	void WriteReference::Request::Write() {
+		nexus::GenericResponse r;
+		r.set_errormessage("Success");
+		r.set_success(true);
+		resp->Finish(r, Status(StatusCode::OK, "Success"), this);
+	}
+	void WriteReference::Request::WriteError(const char* error) {
+		nexus::GenericResponse r;
+		r.set_errormessage(error);
+		r.set_success(false);
+		LOG_REL_A("error writing reference %s", error)
+		resp->Finish(r, Status(StatusCode::INTERNAL, error), this);
 	}
 }}

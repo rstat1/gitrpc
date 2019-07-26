@@ -184,6 +184,7 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 		if server.unbufferedWriteStream(reader, enc) == true {
 			server.writeReferences(enc, parsedRefNames, parsedRefs)
 		}
+		reader.Close()
 	}
 	runtime.GC()
 }
@@ -211,6 +212,7 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
 					enc.Encode(nil)
 					common.LogError("", err)
+					reader.Close()
 				} else {
 
 					if resp, err := stream.Recv(); err != nil || resp.Success == false {
@@ -235,7 +237,6 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 		} else {
 			return false
 		}
-		reader.Close()
 	}
 	return true
 }
@@ -314,19 +315,21 @@ func (server *GitServer) bufferedWrite(reader io.ReadCloser, enc *pktline.Encode
 	// }
 	return false
 }
-func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []string, parsedRefs map[string]string) {
+func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []string, parsedRefs map[string]string) bool {
 	for _, ref := range parsedRefNames {
 		_, e2 := server.rpc.WriteReference(context.Background(), &nexus.WriteReferenceRequest{
-			RepoName: "new-server",//server.CurrentRepo.RepoName,
+			RepoName: "new-server", //server.CurrentRepo.RepoName,
 			RefName:  strings.TrimSuffix(ref, string([]byte{0})),
 			RefRev:   parsedRefs[ref],
 		})
 		if common.LogError("", e2) != nil {
 			enc.Encode([]byte(fmt.Sprintf("ng %s %s\n", strings.TrimSuffix(ref, string([]byte{0})), e2.Error())))
+			return false
 		} else {
 			enc.Encode([]byte(fmt.Sprintf("ok %s\n", strings.TrimSuffix(ref, string([]byte{0})))))
 		}
 	}
+	return true
 }
 
 /*

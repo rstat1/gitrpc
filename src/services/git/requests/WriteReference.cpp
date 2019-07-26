@@ -7,10 +7,14 @@
 
 #include <thread>
 
-#include <services/git/GitRepo.h>
+#include <base/threading/dispatcher/DispatcherTypes.h>
+
+#include <services/git/repository/GitRepo.h>
 #include <services/git/requests/WriteReference.h>
+#include <services/git/repository/RepositoryManager.h>
 
 namespace nexus { namespace git {
+	using namespace gitrpc::git;
 	using namespace gitrpc::common;
 	void WriteReference::StartHandlerThread() {
 		requestHandler.reset(new std::thread(std::bind(&WriteReference::HandlerThread, this)));
@@ -43,45 +47,52 @@ namespace nexus { namespace git {
 			status = RequestStatus::READ;
 			svc->RequestWriteReference(&context, &request, resp.get(), queue, queue, this);
 		} else if (status == RequestStatus::READ) {
-			LOG_ARGS("refname %s", request.refname().c_str());
 			new Request(svc, queue);
 			Read();
 			status = RequestStatus::DONE;
+		} else {
+			LOG_MSG("how about here?")
 		}
 		return true;
 	}
 	void WriteReference::Request::Read() {
 		int errCode;
-		const char* err;
+		std::string err;
 		git_oid objectID;
-		GitRepo* repo = new GitRepo(request.reponame());
-
-		LOG_ARGS("add ref %s with hash = %s to repo %s", request.refname().c_str(), request.refrev().c_str(), request.reponame().c_str());
-
-		err = repo->Open(true);
+		std::future<std::string> result;
+		result = RepoProxy::OpenRepo(request.reponame());
+		result.wait();
+		err = result.get();
 		if (err != "success") {
-			WriteError(err);
+			RepoProxy::CloseRepo();
+			WriteError(err.c_str());
 			return;
 		}
-		err = repo->CreateReference(request.refrev().c_str(), request.refname().c_str());
+		
+		result = RepoProxy::CreateReference(request.refname(), request.refrev());
+		err = result.get();
 		if (err != "success") {
-			WriteError(err);
+			RepoProxy::CloseRepo();
+			WriteError(err.c_str());
 			return;
 		}
+		RepoProxy::CloseRepo();
 		Write();
-		delete repo;
 	}
 	void WriteReference::Request::Write() {
+		LOG_MSG("write ref write resp")
 		nexus::GenericResponse r;
 		r.set_errormessage("Success");
 		r.set_success(true);
 		resp->Finish(r, Status(StatusCode::OK, "Success"), this);
 	}
 	void WriteReference::Request::WriteError(const char* error) {
+		LOG_MSG("write ref write err resp")
 		nexus::GenericResponse r;
 		r.set_errormessage(error);
 		r.set_success(false);
 		LOG_REL_A("error writing reference %s", error)
 		resp->Finish(r, Status(StatusCode::INTERNAL, error), this);
+		delete this;
 	}
 }}

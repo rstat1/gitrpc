@@ -9,6 +9,8 @@
 #define WRTREF
 
 #include <thread>
+#include <future>
+
 #include <base/Utils.h>
 #include <base/common.h>
 #include <common/GitServiceCommon.h>

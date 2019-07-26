@@ -65,7 +65,8 @@
 			"algorithm": "cpp",
 			"codecvt": "cpp",
 			"iomanip": "cpp",
-			"numeric": "cpp"
+			"numeric": "cpp",
+			"future": "cpp"
 		}
 	}
 }

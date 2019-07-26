@@ -13,8 +13,8 @@
 #include <grpcpp/server_builder.h>
 
 #include <base/Utils.h>
-#include <services/git/GitRepo.h>
 #include <services/git/GitServiceImpl.h>
+#include <services/git/repository/GitRepo.h>
 
 #define DEFAULT_REPO_PATH "/home/rstat1/Apps/test/"
 

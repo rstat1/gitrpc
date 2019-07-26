@@ -25,10 +25,12 @@ namespace nexus { namespace common {
 	SINGLETON_DEF(GRPCServer);
 	void GRPCServer::CreateGRPCServerInternal(std::string addr) {
 		std::thread serverThread([&] {
+			LOG_ARGS("starting grpc server at address %s", addr.c_str());
+
 			GitService::AsyncService svc;
 			GitServiceAsyncImpl* asyncSvc = new GitServiceAsyncImpl(&svc);
 			ServerBuilder builder;
-			builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
+			builder.AddListeningPort(currentAddress, grpc::InsecureServerCredentials());
 
 			writeRefQueue = builder.AddCompletionQueue();
 			receivePackQueue = builder.AddCompletionQueue();
@@ -44,18 +46,18 @@ namespace nexus { namespace common {
 	}
 	void GRPCServer::CreateGRPCServer() {
 		unlink(SERVER_SOCKET);
-		std::string address("unix:");
-		address.append(SERVER_SOCKET);
+		currentAddress.append("unix:");
+		currentAddress.append(SERVER_SOCKET);
 		if (CreateUnixSocket(SERVER_SOCKET)) {
-			CreateGRPCServerInternal(address);
+			CreateGRPCServerInternal(currentAddress);
 		} else {
 			LOG_MSG("failed to CreateUnixSocket");
 			exit(0);
 		}
 	}
 	void GRPCServer::CreateHTTPGRPCServer() {
-		std::string serverAddr("0.0.0.0:9001");
-		CreateGRPCServerInternal(serverAddr);
+		currentAddress.append("0.0.0.0:9001");
+		CreateGRPCServerInternal(currentAddress);
 	}
 	void GRPCServer::SetupAsyncHandler(GitServiceAsyncImpl* service) {
 		service->HandleReceivePack(receivePackQueue.get());

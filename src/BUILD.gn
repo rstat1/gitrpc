@@ -17,12 +17,12 @@ executable("gitrpc-server") {
         "app/AppImpl.cpp",
         "common/GRPC.h",
         "common/GRPC.cpp",
-        "services/git/GitRepo.h",
-        "services/git/GitRepo.cpp",
         "common/GitServiceCommon.h",
         "services/git/GitServiceImpl.h",
         "services/git/GitServiceImpl.cpp",
+        "services/git/repository/GitRepo.h",
         "services/git/GitServiceAsyncImpl.h",
+        "services/git/repository/GitRepo.cpp",
         "services/git/GitServiceAsyncImpl.cpp",
         "services/git/requests/ReceivePack.h",
         "services/git/requests/ReceivePack.cpp",
@@ -30,5 +30,7 @@ executable("gitrpc-server") {
         "services/git/requests/RecvPackStream.cpp",
         "services/git/requests/WriteReference.h",
         "services/git/requests/WriteReference.cpp",
+        "services/git/repository/RepositoryManager.h",
+        "services/git/repository/RepositoryManager.cpp",
     ]
 }

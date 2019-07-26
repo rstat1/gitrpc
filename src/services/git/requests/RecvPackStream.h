@@ -9,6 +9,8 @@
 #define RCVPAKSTRM
 
 #include <thread>
+#include <future>
+
 #include <base/Utils.h>
 #include <base/common.h>
 #include <common/GitServiceCommon.h>
@@ -35,10 +37,12 @@ namespace nexus { namespace git {
 					void ReadMessage();
 					void WriteResponse();
 
-					GitRepo* current;
+					bool repoOpen = false;
 					bool isRunning = true;
 					ServerContext context;
 					ReceivePackRequest msg;
+					bool requestFailed = false;
+					const char* failureReason = "";
 					ServerCompletionQueue* queue;
 					nexus::GitService::AsyncService* svc;
 					gitrpc::common::CommonResponseInfo* resp;

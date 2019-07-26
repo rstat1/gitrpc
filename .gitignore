@@ -23,3 +23,5 @@ build.sh
 src/gitrpc-frontend/gitrpc-frontend
 *.log
 test.sh
+*.o
+*.stamp

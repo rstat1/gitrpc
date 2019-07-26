@@ -135,7 +135,6 @@ def SetSteamLinkEnvVars():
 
 def WriteX64GNFlags():
         global buildType
-        print buildType
         if not os.path.exists('out-x86_64'):
                 os.makedirs('out-x86_64')
         with open('out-x86_64/args.gn', 'w+') as argsFile:

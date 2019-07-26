@@ -18,9 +18,7 @@ namespace nexus { namespace git {
 	using namespace grpc;
 	class GitServiceAsyncImpl {
 		public:
-			GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {
-		  		git_libgit2_init();
-			}
+			GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {}
 			HANDLER_DEF(ReceivePack);
 			HANDLER_DEF(WriteReference);
 			HANDLER_DEF(RecvPackStream);

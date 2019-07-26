@@ -8,13 +8,13 @@
 #include <common/GRPC.h>
 #include <app/AppImpl.h>
 #include <services/git/GitServiceImpl.h>
+#include <services/git/repository/RepositoryManager.h>
 
 namespace nexus {
-	using namespace nexus::git;
 	using namespace nexus::common;
     void AppImpl::Main() {
 		LOG_MSG("In AppImpl::AppMain");
-		GRPCServer::Get()->CreateHTTPGRPCServer();
-		// GRPCServer::Get()->CreateGRPCServer();
+		gitrpc::git::RepositoryManager::Get()->Init();
+		GRPCServer::Get()->CreateGRPCServer();
     }
 }

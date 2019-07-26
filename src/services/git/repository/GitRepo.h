@@ -9,6 +9,7 @@
 #define GITRPO
 
 #include <string>
+#include <base/PropertyMacros.h>
 #include <common/GitServiceCommon.h>
 
 #define DEFAULT_REPO_PATH "/home/rstat1/Apps/test/"
@@ -28,11 +29,12 @@ namespace nexus { namespace git {
 			const char* InitWritePackFunctions();
 
             git_odb* odb;
-			std::string repoName;
+			std::string repoPath;
 			git_repository* repo;
 			git_odb_writepack* wp;
 			git_transfer_progress tStats;
 
+		PROPERTY(Name, std::string);
 	};
 }}
 

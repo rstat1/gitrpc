@@ -29,13 +29,12 @@ namespace nexus { namespace common {
 			void CreateGRPCServerInternal(std::string addr);
 			void SetupAsyncHandler(nexus::git::GitServiceAsyncImpl* service);
 
-			ServerContext context;
+			std::string currentAddress;
 			std::unique_ptr<Server> server;
 			nexus::GitService::AsyncService* svc;
 			std::unique_ptr<ServerCompletionQueue> writeRefQueue;
 			std::unique_ptr<ServerCompletionQueue> receivePackQueue;
 			std::unique_ptr<ServerCompletionQueue> recvPackStreamQueue;
-			std::unique_ptr<ServerAsyncReader<GenericResponse, ReceivePackRequest>> reader;
 
 		SINGLETON(GRPCServer);
 	};

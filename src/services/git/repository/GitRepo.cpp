@@ -26,7 +26,6 @@ namespace nexus { namespace git {
 	}
 	const char* GitRepo::Open(bool bare) {
 		int errCode;
-		LOG_ARGS("opening repo %s", repoPath.c_str())
 		if (bare) {
 			errCode = git_repository_open_bare(&repo, repoPath.c_str());
 		} else {

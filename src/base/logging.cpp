@@ -43,14 +43,16 @@ void Log(const char *tag, int line, const char format[], ...) {
 	va_list args;
 	va_start(args, format);
 
-#if defined(OS_ANDROID) || defined(MOBILEBOT)
+#if defined(OS_ANDROID)
 	__android_log_vprint(ANDROID_LOG_DEBUG, tag, format, args);
 #else
 	static const size_t kBufferSize = 2048;
 	char buffer[kBufferSize + 1];
-	const char *TAG = tag;
 	vsnprintf(buffer, kBufferSize, format, args);
 	va_end(args);
+
+	const char* finalSlash = strrchr(tag, '/');
+  	if (finalSlash != nullptr) { tag = finalSlash + 1; }
 
 	string logLine("");
 	logLine.append(tag);

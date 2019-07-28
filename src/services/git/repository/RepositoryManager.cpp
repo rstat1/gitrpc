@@ -16,7 +16,6 @@ namespace gitrpc { namespace git {
 	void RepositoryManager::OpenRepo(void* data) {
 		OpenRepoArgs* repoArgs = (OpenRepoArgs*)data;
 		if (currentRepo == nullptr || (currentRepo != nullptr && repoArgs->repoName != currentRepo->GetName())) {
-			LOG_ARGS("opening repo %s", repoArgs->repoName);
 			currentRepo = new GitRepo(repoArgs->repoName);
 			repoArgs->result.set_value(currentRepo->Open(true));
 			repoRefCnt.store(0);
@@ -33,12 +32,10 @@ namespace gitrpc { namespace git {
 	void RepositoryManager::CommitPackChanges(void* data) {
 		std::lock_guard locker(repoLocker);
 		GenericArgs* args = (GenericArgs*)data;
-		LOG_MSG("commit pack changes")
 		std::string ret(currentRepo->PackCommit(nullptr));
 		if (currentRepo == nullptr) {
 			args->result.set_value("repo not open");
 		} else {
-			packCommitComplete.set_value(true);
 			args->result.set_value(ret);
 		}
 	}
@@ -50,19 +47,17 @@ namespace gitrpc { namespace git {
 	void RepositoryManager::NewReference(void* data) {
 		std::lock_guard locker(repoLocker);
 		NewReferenceArgs* args = (NewReferenceArgs*)data;
-		LOG_MSG("write ref")
 		args->result.set_value(currentRepo->CreateReference(args->refRev.c_str(), args->refName.c_str()));
 	}
 	void RepositoryManager::CloseRepo() {
 		std::lock_guard locker(repoLocker);
 		if (repoRefCnt == 0) {
-			LOG_MSG("closing repo");
 			delete currentRepo;
 			currentRepo = nullptr;
 		} else {
 			repoRefCnt--;
 		}
-		
+
 	}
 	void RepoProxy::CloseRepo() {
 		NEW_TASK0(CloseRepo, RepositoryManager, RepositoryManager::Get(), CloseRepo);

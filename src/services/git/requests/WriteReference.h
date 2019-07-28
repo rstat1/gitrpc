@@ -30,12 +30,12 @@ namespace nexus { namespace git {
 				public:
 					Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
 					bool ProcessRequest();
+					RequestStatus status;
 				private:
 					void Read();
 					void Write();
 					void WriteError(const char* error);
 
-					RequestStatus status;
 					ServerContext context;
 					ServerCompletionQueue* queue;
 					WriteReferenceRequest request;

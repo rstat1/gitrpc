@@ -189,58 +189,122 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 	runtime.GC()
 }
 
+// func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktline.Encoder) bool {
+// 	var pakToWrite []byte
+// 	var wroteToStream bool
+// 	if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err != nil {
+// 		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+// 		enc.Encode(nil)
+// 		common.LogError("", err)
+// 		return false
+// 	} else {
+// 		chunkSize := 2 * 1024 * 1024
+// 		pak := make([]byte, chunkSize)
+
+// 		for {
+// 			if n, _ := reader.Read(pak); n != 0 {
+// 				if n < chunkSize {
+// 					pakToWrite = pak[0:n]
+// 				} else if n == chunkSize {
+// 					pakToWrite = pak
+// 				}
+// 				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: pakToWrite}); err != nil {
+// 					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+// 					enc.Encode(nil)
+// 					common.LogError("", err)
+// 					reader.Close()
+// 				} else {
+
+// 					if resp, err := stream.Recv(); err != nil || resp.Success == false {
+// 						common.LogError("", err)
+// 						return false
+// 					}
+// 					wroteToStream = true
+// 				}
+
+// 			} else {
+// 				break
+// 			}
+// 		}
+// 		if e := stream.CloseSend(); err != nil {
+// 			enc.Encode([]byte(fmt.Sprintf("unpack %s\n", e.Error())))
+// 			enc.Encode(nil)
+// 			return false
+// 		}
+// 		if wroteToStream {
+// 			enc.Encode([]byte("unpack ok\n"))
+// 			enc.Encode(nil)
+// 		} else {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktline.Encoder) bool {
+	var err error
 	var pakToWrite []byte
 	var wroteToStream bool
-	if stream, err := server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true)); err != nil {
+	var stream nexus.GitService_ReceivePackStreamClient
+	chunkSize := 2 * 1024 * 1024
+	pak := make([]byte, chunkSize)
+	for {
+		if n, _ := reader.Read(pak); n != 0 {
+			if n < chunkSize {
+				pakToWrite = pak[0:n]
+			} else if n == chunkSize {
+				pakToWrite = pak
+			}
+			if stream == nil {
+				common.LogDebug("", "", "connecting..")
+				stream, err = server.rpc.ReceivePackStream(context.Background(), grpc.FailFast(true))
+				if err != nil {
+					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
+					enc.Encode(nil)
+					common.LogError("", err)
+					return false
+				}
+			}
+			wroteToStream = server.writeToStream(stream, pakToWrite, "new-server", enc, false)
+
+		} else {
+			break
+		}
+	}
+	pak = nil
+	if wroteToStream {
+		common.LogDebug("", "", "stream done wrting ender")
+		if !server.writeToStream(stream, nil, "new-server", enc, true) {
+			return false
+		}
+		enc.Encode([]byte("unpack ok\n"))
+		enc.Encode(nil)
+	} else {
+		common.LogWarn("", "", "didn't writeToStream")
+		return false
+	}
+	if e := stream.CloseSend(); e != nil {
+		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", e.Error())))
+		enc.Encode(nil)
+		return false
+	}
+
+	return true
+}
+
+func (server *GitServer) writeToStream(stream nexus.GitService_ReceivePackStreamClient, data []byte, repoName string, enc *pktline.Encoder, done bool) bool {
+	if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: data, Done: done}); err != nil {
 		enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
 		enc.Encode(nil)
 		common.LogError("", err)
 		return false
 	} else {
-		chunkSize := 2 * 1024 * 1024
-		pak := make([]byte, chunkSize)
-
-		for {
-			if n, _ := reader.Read(pak); n != 0 {
-				if n < chunkSize {
-					pakToWrite = pak[0:n]
-				} else if n == chunkSize {
-					pakToWrite = pak
-				}
-				if err := stream.Send(&nexus.ReceivePackRequest{RepoName: "new-server", Data: pakToWrite}); err != nil {
-					enc.Encode([]byte(fmt.Sprintf("unpack %s\n", err.Error())))
-					enc.Encode(nil)
-					common.LogError("", err)
-					reader.Close()
-				} else {
-
-					if resp, err := stream.Recv(); err != nil || resp.Success == false {
-						common.LogError("", err)
-						return false
-					}
-					wroteToStream = true
-				}
-
-			} else {
-				break
-			}
-		}
-		if e := stream.CloseSend(); err != nil {
-			enc.Encode([]byte(fmt.Sprintf("unpack %s\n", e.Error())))
-			enc.Encode(nil)
+		if resp, err := stream.Recv(); err != nil || resp.Success == false {
+			common.LogError("", err)
 			return false
 		}
-		if wroteToStream {
-			enc.Encode([]byte("unpack ok\n"))
-			enc.Encode(nil)
-		} else {
-			return false
-		}
+		return true
 	}
-	return true
 }
-
 func (server *GitServer) unbufferedWriteNoStream(reader io.ReadCloser, enc *pktline.Encoder) bool {
 	var pakToWrite []byte
 	var wroteToStream bool

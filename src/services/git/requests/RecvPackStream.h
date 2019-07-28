@@ -32,11 +32,12 @@ namespace nexus { namespace git {
 					Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
 					bool ProcessRequest(RequestStatus status);
 					void FinishRequest();
-					RequestStatus status;
+					RequestStatus currentStatus;
 				private:
 					void ReadMessage();
 					void WriteResponse();
 
+					std::string id;
 					bool repoOpen = false;
 					bool isRunning = true;
 					ServerContext context;

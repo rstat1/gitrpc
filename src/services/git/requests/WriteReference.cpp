@@ -56,6 +56,7 @@ namespace nexus { namespace git {
 		return true;
 	}
 	void WriteReference::Request::Read() {
+		LOG_MSG("read")
 		int errCode;
 		std::string err;
 		git_oid objectID;
@@ -68,7 +69,7 @@ namespace nexus { namespace git {
 			WriteError(err.c_str());
 			return;
 		}
-		
+
 		result = RepoProxy::CreateReference(request.refname(), request.refrev());
 		err = result.get();
 		if (err != "success") {

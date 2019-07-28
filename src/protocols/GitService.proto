@@ -30,6 +30,7 @@ message UploadPackResponse {
 message ReceivePackRequest {
     string repoName = 1;
     bytes data = 2;
+    bool done = 3;
 }
 message ListRefsRequest {
     string repoName = 1;

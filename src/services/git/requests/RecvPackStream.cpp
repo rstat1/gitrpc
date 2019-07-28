@@ -5,6 +5,10 @@
 * found in the included LICENSE file.
 */
 
+#include <grpc++/alarm.h>
+
+#include <base/Utils.h>
+
 #include <services/git/repository/GitRepo.h>
 #include <services/git/requests/RecvPackStream.h>
 #include <services/git/repository/RepositoryManager.h>
@@ -19,30 +23,29 @@ namespace nexus { namespace git {
     void RecvPackStream::HandlerThread() {
 		bool ok = false;
 		void* tag = nullptr;
-		RequestStatus last;
-        auto req = new RecvPackStream::Request(svc, queue);
+		RequestStatus status;
+        auto req = new Request(svc, queue);
 		while(this->queue->Next(&tag, &ok)) {
-			if (ok) {
-				req->ProcessRequest(static_cast<RequestStatus>(reinterpret_cast<size_t>(tag)));
-			} else {
-				LOG_MSG("queue new request")
-				if (req != nullptr) { req->FinishRequest(); }
-				//delete req;
-				req = new RecvPackStream::Request(svc, queue);
+			status = static_cast<RequestStatus>(reinterpret_cast<size_t>(tag));
+			if (ok) { req->ProcessRequest(status); }
+			if (status == RequestStatus::FINISH) {
+				delete req;
+				req = new Request(svc, queue);
 			}
         }
     }
     RecvPackStream::Request::Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) {
-        LOG_MSG("queue rp stream")
+        LOG_ARGS("new rp stream %p", (void*)this)
         queue = cq;
 		svc = service;
-		status = RequestStatus::CONNECT;
-        context.AsyncNotifyWhenDone(reinterpret_cast<void*>(RequestStatus::FINISH));
+		currentStatus = RequestStatus::CONNECT;
+		id = base::utils::GenerateRandomString(16);
+        // context.AsyncNotifyWhenDone(reinterpret_cast<void*>(RequestStatus::DONE));
         sarw.reset(new ServerAsyncReaderWriter<GenericResponse, ReceivePackRequest>(&context));
         svc->RequestReceivePackStream(&context, sarw.get(), queue, queue, reinterpret_cast<void*>(RequestStatus::CONNECT));
     }
     bool RecvPackStream::Request::ProcessRequest(RequestStatus status) {
-		// LOG_MSG("rp stream process");
+		currentStatus = status;
 		switch(status) {
 			case RequestStatus::CONNECT:
 				ReadMessage();
@@ -54,8 +57,9 @@ namespace nexus { namespace git {
 				ReadMessage();
 				break;
 			case RequestStatus::DONE:
-				LOG_MSG("done")
-
+				LOG_ARGS("done %s", id.c_str())
+				isRunning = false;
+				if (repoOpen) { FinishRequest(); }
 				// if (requestFailed) {
 				// 	sarw->Finish(Status(StatusCode::INTERNAL, failureReason), reinterpret_cast<void*>(RequestStatus::FINISH));
 				// } else {
@@ -65,7 +69,6 @@ namespace nexus { namespace git {
 			case RequestStatus::FINISH:
 				LOG_MSG("finish")
 				isRunning = false;
-				FinishRequest();
 				// delete this;
 				break;
 		}
@@ -73,9 +76,12 @@ namespace nexus { namespace git {
     }
 	void RecvPackStream::Request::FinishRequest() {
 		std::string ret;
+		WriteOptions wopts;
 		nexus::GenericResponse r;
+		r.set_errormessage("success");
+		r.set_success(true);
+		LOG_ARGS("finish request %s", id.c_str());
 		if (repoOpen) {
-			LOG_MSG("finish request");
 			auto commitRet = RepoProxy::PackCommit();
 			commitRet.wait();
 			ret = commitRet.get();
@@ -85,17 +91,21 @@ namespace nexus { namespace git {
 				r.set_success(resp->success);
 				failureReason = resp->errorMessage;
 				requestFailed = true;
-				WriteOptions wopts;
-				wopts = wopts.set_last_message();
-				sarw->Write(r, wopts, reinterpret_cast<void*>(RequestStatus::DONE));
-			} else {
-				sarw->Finish(Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
+				sarw->WriteAndFinish(r, wopts, Status(StatusCode::INTERNAL, resp->errorMessage), reinterpret_cast<void*>(RequestStatus::FINISH));
+				RepoProxy::CloseRepo();
+				repoOpen = false;
+				return;
 			}
 			RepoProxy::CloseRepo();
-			delete this;
-		} else {
-			LOG_MSG("hmm...")
+			repoOpen = false;
+
+			sarw->WriteAndFinish(r, wopts, Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
+			LOG_ARGS("finished request %s", id.c_str())
 		}
+		// else {
+		// 	LOG_ARGS("hmm... %s", id.c_str())
+		// 	sarw->WriteAndFinish(r, wopts, Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
+		// }
 		// if (current != nullptr) {
 		// 	nexus::GenericResponse r;
 		// 	const char* err = current->PackCommit(nullptr);
@@ -118,34 +128,10 @@ namespace nexus { namespace git {
 		r.set_errormessage("Success");
 		r.set_success(true);
 		sarw->Write(r, reinterpret_cast<void*>(RequestStatus::WRITE));
-
-		// if (resp == nullptr) {
-		// 	if (current != nullptr) {
-		// 		const char* err = current->PackCommit(nullptr);
-		// 		if (err != "success") {
-		// 			LOG_REL_A("failed to commit pack data: %s", err)
-		// 			resp = Common::Response(err, false, StatusCode::INTERNAL);
-		// 			r.set_errormessage(resp->errorMessage);
-		// 			r.set_success(resp->success);
-		// 			failureReason = resp->errorMessage;
-		// 			requestFailed = true;
-		// 			sarw->Write(r, reinterpret_cast<void*>(RequestStatus::DONE));
-		// 			delete current;
-		// 		} else {
-		// 		}
-		// 	} else {
-		// 		sarw->Write(r, reinterpret_cast<void*>(RequestStatus::WRITE));
-		// 	}
-		// } else {
-		// 	r.set_errormessage(resp->errorMessage);
-		// 	r.set_success(resp->success);
-		// 	sarw->Write(r, reinterpret_cast<void*>(RequestStatus::DONE));
-		// }
-		// LOG_MSG("write")
 	}
 	void RecvPackStream::Request::ReadMessage() {
 		std::string err;
-		git_transfer_progress stats;
+		grpc::Alarm done;
 		if (isRunning) {
 			sarw->Read(&msg, reinterpret_cast<void*>(RequestStatus::READ));
 			if (msg.data().size() > 0) {
@@ -170,6 +156,12 @@ namespace nexus { namespace git {
 					resp = Common::Response(err.c_str(), false, StatusCode::INTERNAL);
 					return;
 				}
+			}
+			if (msg.done() == true) {
+				LOG_MSG("received done msg")
+				done.Set(queue, gpr_time_0(gpr_clock_type::GPR_CLOCK_REALTIME), reinterpret_cast<void*>(RequestStatus::DONE));
+				msg.set_data("");
+				msg.set_reponame("");
 			}
 		} else {
 			LOG_MSG("not running anymroe")

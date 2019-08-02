@@ -28,6 +28,7 @@ namespace nexus { namespace git {
 		while(this->queue->Next(&tag, &ok)) {
 			status = static_cast<RequestStatus>(reinterpret_cast<size_t>(tag));
 			if (ok) { req->ProcessRequest(status); }
+			else { LOG_MSG("not ok") }
 			if (status == RequestStatus::FINISH) {
 				delete req;
 				req = new Request(svc, queue);
@@ -39,8 +40,9 @@ namespace nexus { namespace git {
         queue = cq;
 		svc = service;
 		currentStatus = RequestStatus::CONNECT;
+#if DEBUG
 		id = base::utils::GenerateRandomString(16);
-        // context.AsyncNotifyWhenDone(reinterpret_cast<void*>(RequestStatus::DONE));
+#endif
         sarw.reset(new ServerAsyncReaderWriter<GenericResponse, ReceivePackRequest>(&context));
         svc->RequestReceivePackStream(&context, sarw.get(), queue, queue, reinterpret_cast<void*>(RequestStatus::CONNECT));
     }
@@ -60,16 +62,10 @@ namespace nexus { namespace git {
 				LOG_ARGS("done %s", id.c_str())
 				isRunning = false;
 				if (repoOpen) { FinishRequest(); }
-				// if (requestFailed) {
-				// 	sarw->Finish(Status(StatusCode::INTERNAL, failureReason), reinterpret_cast<void*>(RequestStatus::FINISH));
-				// } else {
-				// 	sarw->Finish(Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
-				// }
 				break;
 			case RequestStatus::FINISH:
 				LOG_MSG("finish")
 				isRunning = false;
-				// delete this;
 				break;
 		}
         return false;
@@ -102,24 +98,6 @@ namespace nexus { namespace git {
 			sarw->WriteAndFinish(r, wopts, Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
 			LOG_ARGS("finished request %s", id.c_str())
 		}
-		// else {
-		// 	LOG_ARGS("hmm... %s", id.c_str())
-		// 	sarw->WriteAndFinish(r, wopts, Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
-		// }
-		// if (current != nullptr) {
-		// 	nexus::GenericResponse r;
-		// 	const char* err = current->PackCommit(nullptr);
-		// 	if (err != "success") {
-		// 		LOG_REL_A("failed to commit pack data: %s", err)
-		// 		resp = Common::Response(err, false, StatusCode::INTERNAL);
-		// 		r.set_errormessage(resp->errorMessage);
-		// 		r.set_success(resp->success);
-		// 		failureReason = resp->errorMessage;
-		// 		requestFailed = true;
-		// 		sarw->Write(r, reinterpret_cast<void*>(RequestStatus::DONE));
-		// 	}
-		// 	delete current;
-		// }
 	}
 	void RecvPackStream::Request::WriteResponse() {
 		nexus::GenericResponse r;
@@ -135,7 +113,6 @@ namespace nexus { namespace git {
 		if (isRunning) {
 			sarw->Read(&msg, reinterpret_cast<void*>(RequestStatus::READ));
 			if (msg.data().size() > 0) {
-				// LOG_ARGS("read %i", msg.data().size())
 				if (repoOpen == false) {
 					auto openResult = RepoProxy::OpenRepo(msg.reponame());
 					openResult.wait();

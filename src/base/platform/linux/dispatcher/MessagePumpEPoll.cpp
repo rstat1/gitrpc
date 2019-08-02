@@ -89,7 +89,7 @@ namespace base { namespace threading
 					LOG_MSG("Running init task.")
 					write(sts->fds[1], &initTask, sizeof(initTask));
 				}
-				epoll_wait(sts->epollFD, events, 1, -1);
+				epoll_wait(sts->epollFD, events, 4, -1);
 
 				if (events[0].data.fd > 0)
 				{

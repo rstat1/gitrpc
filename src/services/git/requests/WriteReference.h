@@ -33,8 +33,7 @@ namespace nexus { namespace git {
 					RequestStatus status;
 				private:
 					void Read();
-					void Write();
-					void WriteError(const char* error);
+					void Write(const char* msg);
 
 					ServerContext context;
 					ServerCompletionQueue* queue;

@@ -68,6 +68,7 @@ namespace gitrpc { namespace git {
 		args->repoName = name.c_str();
 		NEW_TASK1(OpenRepo, RepositoryManager, RepositoryManager::Get(), OpenRepo, args);
 		POST_TASK(OpenRepo, "Main");
+		LOG_MSG("open repo request")
 		return args->result.get_future();
 	}
 	std::future<std::string> RepoProxy::PackCommit() {
@@ -90,6 +91,7 @@ namespace gitrpc { namespace git {
 		args->refRev = refRev;
 		NEW_TASK1(OpenRepo, RepositoryManager, RepositoryManager::Get(), NewReference, args);
 		POST_TASK(OpenRepo, "Main");
+		LOG_MSG("create ref request")
 		return args->result.get_future();
 	}
 }}

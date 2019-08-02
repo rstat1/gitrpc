@@ -155,6 +155,8 @@ func (server *GitServer) postRequestHandler(request *http.Request, resp http.Res
 	case "git-receive-pack":
 		common.LogDebug("pack size", request.Header.Get("Content-Length"), "hi")
 		server.packUpload(request.Body, enc)
+		request.Body.Close();
+		runtime.GC();
 		// server.dataStore.UpdateProjectMRU(repoName)
 		break
 	}
@@ -184,9 +186,7 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 		if server.unbufferedWriteStream(reader, enc) == true {
 			server.writeReferences(enc, parsedRefNames, parsedRefs)
 		}
-		reader.Close()
 	}
-	runtime.GC()
 }
 
 // func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktline.Encoder) bool {

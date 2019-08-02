@@ -22,14 +22,11 @@ namespace nexus { namespace git {
 	void WriteReference::HandlerThread() {
 		bool ok = false;
 		void* tag = nullptr;
-		WriteReference::Request* req;
-		new WriteReference::Request(svc, queue);
+		Request* req;
+		new Request(svc, queue);
 		while(this->queue->Next(&tag, &ok)) {
-			if (ok) {
-				static_cast<WriteReference::Request*>(tag)->ProcessRequest();
-			} else {
-				LOG_ARGS("ok = false %p", req)
-			}
+			req = static_cast<Request*>(tag);
+			if (ok) { req->ProcessRequest(); }
 		}
 	}
 	WriteReference::Request::Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) {
@@ -37,21 +34,26 @@ namespace nexus { namespace git {
 		svc = service;
 		queue = cq;
 		status = RequestStatus::CONNECT;
-		context.AsyncNotifyWhenDone(this);
 		resp.reset(new ServerAsyncResponseWriter<GenericResponse>(&context));
 		ProcessRequest();
 	}
 	bool WriteReference::Request::ProcessRequest() {
+		nexus::GenericResponse r;
 		if (status == RequestStatus::CONNECT) {
 			LOG_MSG("connect");
 			status = RequestStatus::READ;
 			svc->RequestWriteReference(&context, &request, resp.get(), queue, queue, this);
 		} else if (status == RequestStatus::READ) {
-			new Request(svc, queue);
+		 	new Request(svc, queue);
 			Read();
-			status = RequestStatus::DONE;
+		 	status = RequestStatus::FINISH;
+			// resp->Finish(r, Status(StatusCode::OK, "Success"), this);
+		// 	Read();
 		} else {
-			LOG_MSG("how about here?")
+			LOG_MSG("finish")
+			GPR_ASSERT(status == RequestStatus::FINISH);
+			delete this;
+		// 	status = RequestStatus::FINISH;
 		}
 		return true;
 	}
@@ -66,34 +68,30 @@ namespace nexus { namespace git {
 		err = result.get();
 		if (err != "success") {
 			RepoProxy::CloseRepo();
-			WriteError(err.c_str());
+			Write(err.c_str());
 			return;
 		}
-
 		result = RepoProxy::CreateReference(request.refname(), request.refrev());
+		result.wait();
 		err = result.get();
 		if (err != "success") {
 			RepoProxy::CloseRepo();
-			WriteError(err.c_str());
+			Write(err.c_str());
 			return;
 		}
 		RepoProxy::CloseRepo();
-		Write();
+		Write("Success");
 	}
-	void WriteReference::Request::Write() {
-		LOG_MSG("write ref write resp")
+	void WriteReference::Request::Write(const char* msg) {
+		LOG_ARGS("%s", msg)
 		nexus::GenericResponse r;
-		r.set_errormessage("Success");
-		r.set_success(true);
-		resp->Finish(r, Status(StatusCode::OK, "Success"), this);
-	}
-	void WriteReference::Request::WriteError(const char* error) {
-		LOG_MSG("write ref write err resp")
-		nexus::GenericResponse r;
-		r.set_errormessage(error);
-		r.set_success(false);
-		LOG_REL_A("error writing reference %s", error)
-		resp->Finish(r, Status(StatusCode::INTERNAL, error), this);
-		delete this;
+		r.set_errormessage(msg);
+		if (strcmp(msg, "Success") == 0) {
+			r.set_success(true);
+			resp->Finish(r, Status(StatusCode::OK, "Success"), this);
+		} else {
+			r.set_success(false);
+			resp->Finish(r, Status(StatusCode::INTERNAL, msg), this);
+		}
 	}
 }}

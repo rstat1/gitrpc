@@ -43,6 +43,12 @@ namespace base { namespace utils {
 		std::uniform_real_distribution<float> dist(0, 1);
 		return dist(rng);
 	}
+	int RandomInt(int max) {
+		std::random_device rd;
+		std::default_random_engine rng(rd());
+		std::uniform_int_distribution<int> dist(0, max);
+		return dist(rng);
+	}
 	//modified version of this SO answer https://stackoverflow.com/a/19515939/342763
 	std::string GenerateRandomString(size_t len) {
 		const char alphabet[] =

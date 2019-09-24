@@ -30,6 +30,8 @@ executable("gitrpc-server") {
         "services/git/requests/RecvPackStream.cpp",
         "services/git/requests/WriteReference.h",
         "services/git/requests/WriteReference.cpp",
+        "services/git/requests/RepoStateChange.cpp",
+        "services/git/requests/RepoStateChange.h",
         "services/git/repository/RepositoryManager.h",
         "services/git/repository/RepositoryManager.cpp",
     ]

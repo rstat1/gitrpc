@@ -10,16 +10,16 @@
 
 #include <base/threading/dispatcher/DispatcherMessagePump.h>
 
-namespace base { namespace threading 
+namespace base { namespace threading
 {
-	class MessagePumpAndroid : public DispatcherMessagePump 
+	class MessagePumpAndroid : public DispatcherMessagePump
 	{
 		public:
 			void PreInitMessagePump();
 			void MakeMessagePump(bool isTaskRunner) override;
-			void MakeMessagePump(DispatcherTask* InitTask) override;
+			void MakeMessagePump(Task* InitTask) override;
 			void StartMessageLoop(bool isTaskRunner) override;
-			void PostMessageToThread(const char* thread, DispatcherTask *task, bool isTaskRunner) override;
+			void PostMessageToThread(const char* thread, Task *task, bool isTaskRunner) override;
 			void RegisterMessageHandler(MessageReceiver* recv) override;
 		private:
 			void GetSharedState(bool isTaskRunner);

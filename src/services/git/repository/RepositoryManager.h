@@ -5,17 +5,16 @@
 * found in the included LICENSE file.
 */
 
-
 #ifndef REPOMAN
 #define REPOMAN
 
-#include <mutex>
 #include <atomic>
 #include <future>
+#include <mutex>
 
 #include <base/common.h>
-#include <services/git/repository/GitRepo.h>
 #include <base/threading/dispatcher/DispatcherTypes.h>
+#include <services/git/repository/GitRepo.h>
 
 namespace gitrpc { namespace git {
 	using namespace nexus::git;
@@ -41,30 +40,31 @@ namespace gitrpc { namespace git {
 		std::promise<std::future<bool>> result;
 	};
 	class RepoProxy {
-		public:
-			static void CloseRepo();
-			static std::future<std::string> PackCommit();
-			static std::future<std::string> OpenRepo(std::string name);
-			static std::future<std::string> PackAppend(const void* data, size_t size);
-			static std::future<std::string> CreateReference(std::string refName, std::string refRev);
+	public:
+		void CloseRepo();
+		std::future<std::string> PackCommit();
+		std::future<std::string> OpenRepo(std::string name);
+		std::future<std::string> PackAppend(const void* data, size_t size);
+		std::future<std::string> CreateReference(std::string refName, std::string refRev);
+		SINGLETON(RepoProxy);
 	};
 	class RepositoryManager {
-		public:
-			void Init();
-			void CloseRepo();
-			void OpenRepo(void* data);
-			void NewReference(void* data);
-			void AppendDataToPack(void* data);
-			void CommitPackChanges(void* data);
-			void WaitForPackCommit(void* data);
-		private:
-			GitRepo* currentRepo;
-			std::mutex repoLocker;
-			std::atomic<int> repoRefCnt;
-			std::promise<bool> packCommitComplete;
+	public:
+		void Init();
+		void CloseRepo();
+		void OpenRepo(void* data);
+		void NewReference(void* data);
+		void AppendDataToPack(void* data);
+		void CommitPackChanges(void* data);
+
+	private:
+		GitRepo* currentRepo;
+		std::mutex repoLocker;
+		std::atomic<int> repoRefCnt;
+		std::promise<bool> packCommitComplete;
 
 		SINGLETON(RepositoryManager);
 	};
-}}
+}} // namespace gitrpc::git
 
 #endif

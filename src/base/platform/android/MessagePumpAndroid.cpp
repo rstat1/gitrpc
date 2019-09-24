@@ -15,12 +15,12 @@
 
 using namespace platform::android;
 
-namespace base { namespace threading 
+namespace base { namespace threading
 {
 	bool DispatcherMessagePump::msgPumpWinInit;
 	int LooperCallback(int fd, int events, void* data)
 	{
-		DispatcherTask* task;		
+		Task* task;
 		AndroidAppState* ahs = (AndroidAppState*) data;
 
 		Log("XPAppFX-Native", "Running task on thread id: %u", syscall(__NR_gettid));
@@ -40,7 +40,7 @@ namespace base { namespace threading
 		Thread* AppHostThread = Dispatcher::Get()->GetThread(this->wndIdExtenstion);
 		AndroidAppState* ahs = (AndroidAppState*) AppHostThread->extra;
 		ALooper* looper = ALooper_prepare(0);
-		
+
 		if (ahs == nullptr) { writeToLog("Why is the null?"); }
 		else
 		{
@@ -49,7 +49,7 @@ namespace base { namespace threading
 
 			pipe(ahs->fds);
 			ALooper_addFd(ahs->threadLooper, ahs->fds[0], 1, ALOOPER_EVENT_INPUT, LooperCallback, ahs);
-		}		
+		}
 
 		this->StartMessageLoop();
 	}
@@ -62,7 +62,7 @@ namespace base { namespace threading
 
 		int ident;
 		int events;
-		DispatcherTask* eventData;
+		Task* eventData;
 
 		this->startComplete = true;
 		this->postBlocker->Signal();
@@ -71,8 +71,8 @@ namespace base { namespace threading
 		writeToLog("Oh look an event");
 
 	}
-	void MessagePumpAndroid::PostMessageToThread(const char* thread, DispatcherTask *task)
-	{	
+	void MessagePumpAndroid::PostMessageToThread(const char* thread, Task *task)
+	{
 		if (this->startComplete == false) { this->postBlocker->Wait(); }
 
 		Thread* AppHostThread = Dispatcher::Get()->GetThread(thread);

@@ -17,7 +17,7 @@ namespace base { namespace threading
 	static void* ThreadStartFunction(void* param)
 	{
 		ThreadStartInfo* tsi = static_cast<ThreadStartInfo*>(param);
-		Dispatcher* disp = tsi->DispatcherRef;
+		// Dispatcher* disp = tsi->DispatcherRef;
 		PlatformThread::Delegate* del = tsi->ThreadDelegate;
 		PlatformThread::SetThreadName(tsi->threadName);
 		del->ThreadMain();
@@ -40,7 +40,7 @@ namespace base { namespace threading
 	{
 		ThreadStartInfo* tsi = new ThreadStartInfo;
 		tsi->ThreadDelegate = delegate;
-		tsi->DispatcherRef = Dispatcher::Get();
+		// tsi->DispatcherRef = Dispatcher::Get();
 		tsi->threadName = name;
 
 		writeToLog("PlatformThread::Create()");

@@ -9,6 +9,7 @@
 	],
 	"settings": {
 		"files.associations": {
+			"*.uism": "xml",
 			"any": "cpp",
 			"array": "cpp",
 			"atomic": "cpp",
@@ -66,7 +67,8 @@
 			"codecvt": "cpp",
 			"iomanip": "cpp",
 			"numeric": "cpp",
-			"future": "cpp"
+			"future": "cpp",
+			"*.ipp": "cpp"
 		}
 	}
 }

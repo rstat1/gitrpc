@@ -18,10 +18,10 @@ namespace base { namespace threading {
 	bool DispatcherMessagePump::msgPumpWinInit;
 
 	LRESULT CALLBACK ThreadMessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-		DispatcherTask *task;
+		Task *task;
 
 		if (message == newTaskMessage) {
-			task = (DispatcherTask *)lParam;
+			task = (Task *)lParam;
 			//TODO: Task with no args?
 			if (task->HasCallback()) {
 				task->InvokeWithCallback(!task->HasArguments());
@@ -65,7 +65,7 @@ namespace base { namespace threading {
 		GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, static_cast<char *>(address), &instance);
 		return instance;
 	}
-	void MessagePumpWin::MakeMessagePump(DispatcherTask *InitTask, bool isTaskRunner) {
+	void MessagePumpWin::MakeMessagePump(Task *InitTask, bool isTaskRunner) {
 		char wndClassName[512];
 
 		sprintf(wndClassName, "ThreadDispatchWin-%s", this->wndIdExtenstion);
@@ -137,7 +137,7 @@ namespace base { namespace threading {
 			DispatchMessage(&msg);
 		}
 	}
-	void MessagePumpWin::PostMessageToThread(const char *thread, DispatcherTask *task, bool isTaskRunner) {
+	void MessagePumpWin::PostMessageToThread(const char *thread, Task *task, bool isTaskRunner) {
 		if (this->startComplete == false) { this->postBlocker->Wait(); }
 
 		HWND threadMsgWindow;

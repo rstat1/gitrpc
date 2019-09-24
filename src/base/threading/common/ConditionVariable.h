@@ -8,7 +8,6 @@
 #ifndef CONDVAR
 #define CONDVAR
 
-#include <base/base_exports.h>
 #include <base/common.h>
 #include <base/threading/common/thread_types.h>
 

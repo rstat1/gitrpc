@@ -429,7 +429,7 @@ set_defaults("loadable_module") {
   configs = default_shared_library_configs
 }
 template("component") {
-    component_type = "source_set"
+    component_type = "static_library"
     target(component_type, target_name) {
         sources = invoker.sources
         if (defined(invoker.deps)) {

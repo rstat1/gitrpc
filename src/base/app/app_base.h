@@ -9,7 +9,8 @@
 #define BASEAPP
 
 #include <base/common.h>
-#include <base/threading/dispatcher/DispatcherTypes.h>
+#include <base/threading/common/TaskRunner.h>
+#include <base/threading/dispatcher/Dispatcher.h>
 
 #define APP_BASE(name)            \
 	class name : public AppBase { \
@@ -34,7 +35,7 @@ namespace base { namespace app {
 		std::function<void()> appFunc;
 
 	private:
-		TaskRunner *taskRunner;
+		TaskRunner* taskRunner;
 	};
 }} // namespace base::app
 

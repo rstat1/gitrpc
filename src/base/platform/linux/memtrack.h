@@ -8,23 +8,21 @@
 #ifndef MEMTRK
 #define MEMTRK
 
-#include <stdio.h>
+#include <base/common.h>
 #include <fstream>
 #include <iostream>
-#include <unistd.h>
-#include <base/common.h>
+#include <stdio.h>
 #include <sys/resource.h>
+#include <unistd.h>
 
 using namespace std;
 
-namespace base { namespace platform
-{
-	class MemTrack
-	{
-		public:
-			static double GetPeakMemoryUse();
-			static double GetCurrentMemoryUse();
+namespace base { namespace platform {
+	class MemTrack {
+	public:
+		static double GetPeakMemoryUse();
+		static double GetCurrentMemoryUse();
 	};
-}}
+}} // namespace base::platform
 
 #endif

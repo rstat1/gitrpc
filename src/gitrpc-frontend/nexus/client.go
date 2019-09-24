@@ -85,3 +85,9 @@ func (rpc *RPCClient) WriteReference(ctx context.Context, in *WriteReferenceRequ
 	client := NewGitServiceClient(rpc.connection)
 	return client.WriteReference(ctx, in, opts...)
 }
+
+//ChangeRepositoryState ...
+func (rpc *RPCClient) ChangeRepositoryState(ctx context.Context, in *RepoStateChangeRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	client := NewGitServiceClient(rpc.connection)
+	return client.ChangeRepositoryState(ctx, in, opts...)
+}

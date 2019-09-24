@@ -216,7 +216,7 @@ def GenerateBuildInfo():
                 verInfo.write(version)
 
 def CopyDeps():
-        if binDeps != None:
+        if binDeps != None and len(binDeps) > 0:
                 libArch = ""
                 srcPaths = []
                 dstPaths = []

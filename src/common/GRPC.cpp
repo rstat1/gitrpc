@@ -35,6 +35,7 @@ namespace nexus { namespace common {
 			writeRefQueue = builder.AddCompletionQueue();
 			receivePackQueue = builder.AddCompletionQueue();
 			recvPackStreamQueue = builder.AddCompletionQueue();
+			repoStateStreamQueue = builder.AddCompletionQueue();
 
 			builder.RegisterService(&svc);
 			this->server = builder.BuildAndStart();
@@ -60,9 +61,9 @@ namespace nexus { namespace common {
 		CreateGRPCServerInternal(currentAddress);
 	}
 	void GRPCServer::SetupAsyncHandler(GitServiceAsyncImpl* service) {
-		service->HandleReceivePack(receivePackQueue.get());
 		service->HandleWriteReference(writeRefQueue.get());
 		service->HandleRecvPackStream(recvPackStreamQueue.get());
+		service->HandleRepoStateChange(repoStateStreamQueue.get());
 	}
 
 }}

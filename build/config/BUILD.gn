@@ -1314,13 +1314,8 @@ config("common") {
     libs = []
     include_dirs = [
         "../../src/",
-        "../../include/",
         "../../external/",
-        "../../external/sdl/include/",
-        "../../external/cpr/include/",
         "../../external/jsoncpp/",
-        "../../external/cpr/opt/curl/include",
-        "../../external/ffmpeg",
     ]
 }
 config("protobuf_common") {
@@ -1349,11 +1344,15 @@ config("linux_flags") {
     cflags_cc = [
         "-frtti",
         "-fPIC",
-        "-g3",
+        # "-g3",
         # "-Og"
     ]
 }
 config("SDL") {
+    include_dirs = [
+       "../../external/ffmpeg",
+       "../../external/sdl/include/",
+    ]
     if (target_cpu == "arm" && is_linux) {
       libs = [
          "../../external/libs/linux/arm/libSDL2.so",
@@ -1365,8 +1364,9 @@ config("SDL") {
     }
 }
 config("ffmpeg") {
-    libs = [
-
+    libs = []
+    include_dirs = [
+       "../../external/ffmpeg",
     ]
     if (target_cpu == "arm" && is_linux) {
       libs += [

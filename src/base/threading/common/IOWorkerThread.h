@@ -7,8 +7,7 @@
 
 #ifndef WORKTHRD
 #define WORKTHRD
-
-#include <base/base_exports.h>
+#include <base/common.h>
 #include <base/threading/common/IOTasks.h>
 #include <base/threading/common/PlatformThread.h>
 

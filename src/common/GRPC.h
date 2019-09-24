@@ -35,6 +35,7 @@ namespace nexus { namespace common {
 			std::unique_ptr<ServerCompletionQueue> writeRefQueue;
 			std::unique_ptr<ServerCompletionQueue> receivePackQueue;
 			std::unique_ptr<ServerCompletionQueue> recvPackStreamQueue;
+			std::unique_ptr<ServerCompletionQueue> repoStateStreamQueue;
 
 		SINGLETON(GRPCServer);
 	};

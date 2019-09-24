@@ -21,7 +21,7 @@ namespace base { namespace threading { namespace IO {
 
 	protected:
 		std::function<void(TaskResult *)> resultCallback;
-		DispatcherTask *task;
+		Task *task;
 	};
 
 }}} // namespace base::threading::IO

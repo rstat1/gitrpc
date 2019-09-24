@@ -8,7 +8,6 @@
 #ifndef IACCHAN
 #define IACCHAN
 
-#include <base/base_exports.h>
 #include <base/common.h>
 #include <base/ipc/IPCTypes.h>
 #include <base/threading/dispatcher/DispatcherTypes.h>

@@ -6,11 +6,14 @@ shared_library("base") {
             "-fPIC"
         ]
     }
-    deps += [ "//src/base/platform/$target_os:PAL" ]    
+    deps += [
+        "//src/base/platform/$target_os:PAL",
+        "//build/config/sanitizers:deps",
+        "//src/base/taskmanager:taskmanager"
+    ]
     if (is_win) {
         defines = [ "BASE_EXPORTS" ]
     }
-    
     sources = [
         "Utils.cpp",
         "base64.cpp",
@@ -25,6 +28,7 @@ shared_library("base") {
         "common.h",
         "base64.h",
         "logging.h",
+        "StringView.h",
         "app/app_base.h",
         "base_exports.h",
         "ipc/IPCChannel.h",

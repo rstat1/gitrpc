@@ -22,6 +22,7 @@ namespace nexus { namespace git {
 			HANDLER_DEF(ReceivePack);
 			HANDLER_DEF(WriteReference);
 			HANDLER_DEF(RecvPackStream);
+			HANDLER_DEF(RepoStateChange);
 		private:
 			GitService::AsyncService* gitService;
 	};

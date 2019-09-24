@@ -6,6 +6,7 @@
 */
 
 #include <base/events/EventHub.h>
+#include <base/threading/dispatcher/Dispatcher.h>
 #include <base/threading/dispatcher/DispatcherTypes.h>
 #include <memory>
 

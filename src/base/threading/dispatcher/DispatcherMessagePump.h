@@ -8,26 +8,25 @@
 #ifndef DISPMSGPMP
 #define DISPMSGPMP
 
-#include <base/threading/common/ConditionVariable.h>
-#include <base/threading/common/thread_types.h>
 #include <map>
 #include <string>
 
-#if defined(OS_LINUX) || defined(OS_STEAMLINK)
-#include <base/platform/linux/dispatcher/DispatcherTypesLinux.h>
-#include <base/platform/linux/dispatcher/SharedThreadState.h>
-using namespace platform;
-#elif defined(OS_WIN)
+#include <base/threading/common/ConditionVariable.h>
+#include <base/threading/common/thread_types.h>
+
+#if defined(OS_WIN)
 #include <base/platform/win/dispatcher/DispatcherTypesWin.h>
+#elif defined(OS_LINUX) || defined(OS_STEAMLINK)
+#include <base/platform/linux/dispatcher/DispatcherTypesLinux.h>
 #endif
 
 namespace base { namespace threading {
-	class DispatcherTask;
+	class Task;
 
 	class BASEAPI DispatcherMessagePump {
 	public:
 		DispatcherMessagePump() {}
-		DispatcherMessagePump(const char *winIDExt) {
+		DispatcherMessagePump(const char* winIDExt) {
 			this->startComplete = false;
 			this->wndIdExtenstion = winIDExt;
 			postBlocker = new ConditionVariable();
@@ -35,18 +34,18 @@ namespace base { namespace threading {
 		}
 		~DispatcherMessagePump() {}
 		virtual void MakeMessagePump(bool isTaskRunner) = 0;
-		virtual void MakeMessagePump(DispatcherTask *InitTask, bool isTaskRunner) = 0;
 		virtual void StartMessageLoop(bool isTaskRunner) = 0;
-		virtual void PostMessageToThread(const char *thread, DispatcherTask *task, bool isTaskRunner) = 0;
+		virtual void MakeMessagePump(Task* InitTask, bool isTaskRunner) = 0;
+		virtual void PostMessageToThread(const char* thread, Task* task, bool isTaskRunner) = 0;
 
-		//virtual void RegisterMessageHandler(MessageReceiver* recv) = 0;
-		const char *wndIdExtenstion;
+		virtual void RegisterMessageFilter(MessageReceiver* recv) = 0;
+		const char* wndIdExtenstion;
 		bool startComplete;
 
 	protected:
-		ConditionVariable *postBlocker;
+		ConditionVariable* postBlocker;
 		static bool msgPumpWinInit;
-		DispatcherTask *initTask;
+		Task* initTask;
 	};
 }} // namespace base::threading
 

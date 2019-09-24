@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 An Incredibly Big Red Robot
+* Copyright (c) 2014-2019 An Incredibly Big Red Robot
 *
 * Use of this source code is governed by a "BSD-style" license that can be
 * found in the included LICENSE file.
@@ -9,30 +9,51 @@
 #define DISPTYPES
 
 #include <any>
+
 #include <base/common.h>
-#include <base/threading/dispatcher/Dispatcher.h>
 
 #define THREAD_CHECK(name) assert(Dispatcher::Get()->IsCorrectThread(name) == true);
 #define POST_TASK(task, threadName) Dispatcher::Get()->PostTask(threadName, task)
-#define NEW_TASK0(Name, TaskType, TaskTypeRef, Function) DispatcherTask* Name = DispatcherTask::CreateTask<TaskType, &TaskType::Function>(TaskTypeRef)
-#define NEW_TASK1(Name, TaskType, TaskTypeRef, Function, Args) DispatcherTask* Name = DispatcherTask::CreateTask<TaskType, &TaskType::Function>(TaskTypeRef, Args)
+#define RANKED_TASK0(Name, Type, Ref, Func, TPriority) Task* Name = \
+														   Task::Create<Type, &Type::Func>(Ref, TPriority)
+
+#define RANKED_TASK1(Name, Type, Ref, Func, TPriority, Args) Task* Name = \
+																 Task::Create<Type, &Type::Func>(Ref, Args, TPriority)
+
+#define NEW_TASK0(Name, TaskType, TaskTypeRef, Function) RANKED_TASK0(Name, TaskType, TaskTypeRef, Function, TaskPriority::LOW)
+#define NEW_TASK1(Name, TaskType, TaskTypeRef, Function, Args) RANKED_TASK1(Name, TaskType, TaskTypeRef, Function, TaskPriority::LOW, Args)
+
+// #define NAMEOF(T) #T
+
+#define DEBUG_NEWTASK1(Name, TaskType, TaskTypeRef, Function, Args, FuncNameAsStr) \
+	LOG_MSG(FuncNameAsStr)                                                         \
+	RANKED_TASK1(Name, TaskType, TaskTypeRef, Function, TaskPriority::LOW, Args)
 
 namespace base { namespace threading {
+	enum class TaskPriority {
+		HIGH = 0,
+		NORMAL,
+		LOW,
+	};
 	struct TaskResult {
 	public:
 		std::any result;
 		TaskResult() {}
 		TaskResult(std::any value) { result = value; }
 	};
-	class DispatcherTask {
+	class Task {
+	public:
 		typedef void* PointerToObject;
 		typedef TaskResult* (*TaskFunction)(PointerToObject, void*);
 		typedef TaskResult* (*TaskFunctionNoArgs)(PointerToObject);
 		typedef void (*TaskCBFunction)(PointerToObject, TaskResult*);
 		typedef void (*TaskFuncNoReturn)(PointerToObject, void*);
 		typedef void (*TaskNoAnything)(PointerToObject);
-
-	public:
+		struct PriorityComparer {
+			bool operator()(Task& x, Task& y) {
+				return std::greater<int>()((int)x.GetTaskPriority(), (int)y.GetTaskPriority());
+			}
+		};
 		TaskCBFunction cbFunction;
 		TaskFunction taskFunction;
 		TaskNoAnything taskNothing;
@@ -40,116 +61,88 @@ namespace base { namespace threading {
 		TaskFuncNoReturn taskFuncNoReturn;
 
 		template <TaskResult* (*Function)(void*)>
-		static DispatcherTask* CreateTask(void* args) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<Function>(args);
+		static Task* Create(void* args, TaskPriority priority) {
+			Task* dt = new Task();
+			dt->Bind<Function>(args, priority);
 			return dt;
 		}
-		template <class C, void (C::*Function)(void*)>
-		static DispatcherTask* CreateTask(C* reference, void* args) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<C, Function>(reference, args);
+		template <class ClassType, void (ClassType::*Function)(void*)>
+		static Task* Create(ClassType* reference, void* args, TaskPriority priority) {
+			Task* dt = new Task();
+			dt->Bind<ClassType, Function>(reference, args, priority);
 			return dt;
 		}
-		template <class C, TaskResult* (C::*Function)(void*)>
-		static DispatcherTask* CreateTask(C* reference, void* args) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<C, Function>(reference, args);
+		template <class ClassType, TaskResult* (ClassType::*Function)(void*)>
+		static Task* Create(ClassType* reference, void* args, TaskPriority priority) {
+			Task* dt = new Task();
+			dt->Bind<ClassType, Function>(reference, args, priority);
 			return dt;
 		}
-		template <class C, void (C::*Function)()>
-		static DispatcherTask* CreateTask(C* reference) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<C, Function>(reference);
+		template <class ClassType, void (ClassType::*Function)()>
+		static Task* Create(ClassType* reference, TaskPriority priority) {
+			Task* dt = new Task();
+			dt->Bind<ClassType, Function>(reference, priority);
 			return dt;
 		}
-		template <class C, TaskResult* (C::*Function)()>
-		static DispatcherTask* CreateTask(C* reference) {
-			DispatcherTask* task = new DispatcherTask();
-			task->Bind<C, Function>(reference);
+		template <class ClassType, TaskResult* (ClassType::*Function)()>
+		static Task* Create(ClassType* reference, TaskPriority priority) {
+			Task* task = new Task();
+			task->Bind<ClassType, Function>(reference, priority);
 			return task;
 		}
-		template <class TaskType, class Callback, TaskResult* (TaskType::*TaskFunc)(void*), void (Callback::*CBFunc)(TaskResult*)>
-		static DispatcherTask* CreateTaskCB(TaskType* taskRef, Callback* cbRef, void* args, const char* callbackThreadName) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<TaskType, Callback, TaskFunc, CBFunc>(taskRef, cbRef, args, callbackThreadName);
-			return dt;
-		}
-		template <class TaskType, class Callback, TaskResult* (TaskType::*TaskFunc)(), void (Callback::*CBFunc)(TaskResult*)>
-		static DispatcherTask* CreateTaskCB(TaskType* taskRef, Callback* cbRef, const char* callbackThreadName) {
-			DispatcherTask* dt = new DispatcherTask();
-			dt->Bind<TaskType, Callback, TaskFunc, CBFunc>(taskRef, cbRef, callbackThreadName);
-			return dt;
-		}
-		template <class C, TaskResult* (C::*Function)()>
-		void Bind(C* reference) {
+		template <class ClassType, TaskResult* (ClassType::*Function)()>
+		void Bind(ClassType* reference, TaskPriority priority) {
 			taskFuncInstance = reference;
 			functionArguments = nullptr;
 			hasCB = false;
 			hasArgs = false;
 			isCBTask = false;
-			taskFuncNoArgs = &ClassMethod<C, Function>;
+			taskPriority = priority;
+
+			taskFuncNoArgs = &ClassMethod<ClassType, Function>;
 		}
 		template <TaskResult* (*Function)(void*)>
-		void Bind(void* args) {
+		void Bind(void* args, TaskPriority priority) {
 			taskFuncInstance = nullptr;
 			functionArguments = args;
 			hasCB = false;
 			hasArgs = true;
 			isCBTask = false;
 			hasReturn = true;
+			taskPriority = priority;
 			taskFunction = &Method<Function>;
 		}
-		template <class C, TaskResult* (C::*Function)(void*)>
-		void Bind(C* reference, void* args) {
+		template <class ClassType, TaskResult* (ClassType::*Function)(void*)>
+		void Bind(ClassType* reference, void* args, TaskPriority priority) {
 			taskFuncInstance = reference;
 			functionArguments = args;
 			hasCB = false;
 			hasArgs = true;
 			isCBTask = false;
 			hasReturn = true;
-			taskFunction = &ClassMethod<C, Function>;
+			taskPriority = priority;
+			taskFunction = &ClassMethod<ClassType, Function>;
 		}
-		template <class Task, class Callback, TaskResult* (Task::*Function)(void*), void (Callback::*CBFunc)(TaskResult*)>
-		void Bind(Task* TaskReference, Callback* CallbackReference, void* args, const char* callbackThreadName) {
-			taskFuncInstance = TaskReference;
-			cbFuncInstance = CallbackReference;
-			functionArguments = args;
-			cbThreadName = callbackThreadName;
-			hasCB = true;
-			hasArgs = true;
-			taskFunction = &ClassMethod<Task, Function>;
-			cbFunction = &ClassMethod<Callback, CBFunc>;
-		}
-		template <class Task, class Callback, TaskResult* (Task::*Function)(), void (Callback::*CBFunc)(TaskResult*)>
-		void Bind(Task* TaskReference, Callback* CallbackReference, const char* callbackThreadName) {
-			taskFuncInstance = TaskReference;
-			cbFuncInstance = CallbackReference;
-			functionArguments = nullptr;
-			cbThreadName = callbackThreadName;
-			hasCB = true;
-			taskFuncNoArgs = &ClassMethod<Task, Function>;
-			cbFunction = &ClassMethod<Callback, CBFunc>;
-		}
-		template <class C, void (C::*Function)(void*)>
-		void Bind(C* reference, void* args) {
+		template <class ClassType, void (ClassType::*Function)(void*)>
+		void Bind(ClassType* reference, void* args, TaskPriority priority) {
 			taskFuncInstance = reference;
 			functionArguments = args;
 			hasCB = false;
 			hasArgs = true;
 			isCBTask = false;
 			hasReturn = false;
-			taskFuncNoReturn = &ClassMethod<C, Function>;
+			taskFuncNoReturn = &ClassMethod<ClassType, Function>;
 		}
-		template <class C, void (C::*Function)()>
-		void Bind(C* reference) {
+		template <class ClassType, void (ClassType::*Function)()>
+		void Bind(ClassType* reference, TaskPriority priority) {
 			taskFuncInstance = reference;
 			functionArguments = nullptr;
 			hasCB = false;
 			hasArgs = false;
 			isCBTask = false;
 			hasReturn = false;
-			taskNothing = &ClassMethod<C, Function>;
+			taskPriority = priority;
+			taskNothing = &ClassMethod<ClassType, Function>;
 		}
 		template <TaskResult* (*Function)()>
 		static void Method(PointerToObject) {
@@ -197,36 +190,16 @@ namespace base { namespace threading {
 					taskNothing(taskFuncInstance);
 				}
 			}
-		}
-		void InvokeWithCallback(bool NoArguments) {
-			TaskResult* tr;
-
-			if (!NoArguments) {
-				tr = taskFunction(taskFuncInstance, functionArguments);
-			} else {
-				tr = taskFuncNoArgs(taskFuncInstance);
-			}
-
-			Dispatcher::Get()->PostTaskToThread(DispatcherTask::CreateCallbackTask(tr, cbFuncInstance, cbFunction), cbThreadName);
-		}
-		//Shouldn't be run in a message loop as it just return to the message loop function that called it.
-		TaskResult* InvokeAndReturn(bool NoArguments) {
-			if (!NoArguments) {
-				return taskFunction(taskFuncInstance, functionArguments);
-			} else {
-				return taskFuncNoArgs(taskFuncInstance);
-			}
+			isComplete = true;
 		}
 		bool HasCallback() { return hasCB; }
 		bool HasArguments() { return hasArgs; }
+		bool IsComplete() { return isComplete; }
 		const char* GetCallbackThreadName() { return cbThreadName; }
+		TaskPriority GetTaskPriority() const { return taskPriority; }
 
 	private:
-		DispatcherTask* CreateCallbackTask(TaskResult* tr, PointerToObject reference, TaskCBFunction callback) {
-			DispatcherTask* cbTask = new DispatcherTask();
-			cbTask->CallbackBind(reference, callback, tr);
-			return cbTask;
-		}
+		TaskPriority taskPriority;
 		void CallbackBind(PointerToObject reference, TaskCBFunction cb, TaskResult* args) {
 			cbFuncInstance = reference;
 			functionArguments = args;
@@ -235,13 +208,14 @@ namespace base { namespace threading {
 			hasReturn = false;
 			hasCB = false;
 		}
-		DispatcherTask() {}
+		Task() {}
 		PointerToObject taskFuncInstance, cbFuncInstance;
 
 		void* functionArguments;
-		bool hasCB = false, isCBTask = false, hasArgs = false, hasReturn = true;
-		const char* cbThreadName;
+		bool hasCB = false, isCBTask = false, hasArgs = false, hasReturn = true, isComplete = false;
+		const char* cbThreadName = "";
 	};
-}} // namespace base::threading
+}
+} // namespace base::threading
 
 #endif

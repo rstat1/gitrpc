@@ -10,8 +10,8 @@
 #include <base/threading/dispatcher/DispatcherTypes.h>
 
 #include <services/git/repository/GitRepo.h>
-#include <services/git/requests/WriteReference.h>
 #include <services/git/repository/RepositoryManager.h>
+#include <services/git/requests/WriteReference.h>
 
 namespace nexus { namespace git {
 	using namespace gitrpc::git;
@@ -24,7 +24,7 @@ namespace nexus { namespace git {
 		void* tag = nullptr;
 		Request* req;
 		new Request(svc, queue);
-		while(this->queue->Next(&tag, &ok)) {
+		while (this->queue->Next(&tag, &ok)) {
 			req = static_cast<Request*>(tag);
 			if (ok) { req->ProcessRequest(); }
 		}
@@ -44,16 +44,16 @@ namespace nexus { namespace git {
 			status = RequestStatus::READ;
 			svc->RequestWriteReference(&context, &request, resp.get(), queue, queue, this);
 		} else if (status == RequestStatus::READ) {
-		 	new Request(svc, queue);
+			new Request(svc, queue);
 			Read();
-		 	status = RequestStatus::FINISH;
+			status = RequestStatus::FINISH;
 			// resp->Finish(r, Status(StatusCode::OK, "Success"), this);
-		// 	Read();
+			// 	Read();
 		} else {
 			LOG_MSG("finish")
 			GPR_ASSERT(status == RequestStatus::FINISH);
 			delete this;
-		// 	status = RequestStatus::FINISH;
+			// 	status = RequestStatus::FINISH;
 		}
 		return true;
 	}
@@ -63,23 +63,24 @@ namespace nexus { namespace git {
 		std::string err;
 		git_oid objectID;
 		std::future<std::string> result;
-		result = RepoProxy::OpenRepo(request.reponame());
+		// result = RepoProxy::Get()->OpenRepo(request.reponame());
+		// result.wait();
+		// err = result.get();
+		// if (err != "success") {
+		// 	RepoProxy::Get()->CloseRepo();
+		// 	Write(err.c_str());
+		// 	return;
+		// }
+		result = RepoProxy::Get()->CreateReference(request.refname(), request.refrev());
 		result.wait();
 		err = result.get();
 		if (err != "success") {
-			RepoProxy::CloseRepo();
+			// RepoProxy::Get()->CloseRepo();
+			LOG_ARGS("error %s", err.c_str())
 			Write(err.c_str());
 			return;
 		}
-		result = RepoProxy::CreateReference(request.refname(), request.refrev());
-		result.wait();
-		err = result.get();
-		if (err != "success") {
-			RepoProxy::CloseRepo();
-			Write(err.c_str());
-			return;
-		}
-		RepoProxy::CloseRepo();
+		// RepoProxy::Get()->CloseRepo();
 		Write("Success");
 	}
 	void WriteReference::Request::Write(const char* msg) {
@@ -94,4 +95,4 @@ namespace nexus { namespace git {
 			resp->Finish(r, Status(StatusCode::INTERNAL, msg), this);
 		}
 	}
-}}
+}} // namespace nexus::git

@@ -8,21 +8,21 @@
 #ifndef EVENTARG
 #define EVENTARG
 
-#define EVENTARGS(name, type) \
-	struct name##EventArgs \
+#define EVENTARGS(classname, arg1) \
+	struct classname##EventArgs \
 	{\
 		public:\
-			type GetValue() { return arg##name; }\
-			name##EventArgs(type value##name) { arg##name = value##name; } \
+			arg1 arg1##First() { return arg##classname; }\
+			classname##EventArgs(arg1 value##classname) { arg##classname = value##classname; } \
 		private:\
-			type arg##name;\
+			arg1 arg##classname;\
 	};
 #define EVENTARGS2(classname, arg1, arg2) \
 	struct classname##EventArgs \
 	{\
 		public:\
-			arg1 GetFirstArgument() { return a1##classname; }\
-			arg2 GetSecondArgument() { return a2##classname; }\
+			arg1 arg1##First() { return a1##classname; }\
+			arg2 arg2##Second() { return a2##classname; }\
 			classname##EventArgs(arg1 a1, arg2 a2) {\
 				a1##classname = a1;\
 				a2##classname = a2;\
@@ -35,9 +35,9 @@
 	struct classname##EventArgs \
 	{\
 		public:\
-			arg1 GetFirstArgument() { return a1##classname; }\
-			arg2 GetSecondArgument() { return a2##classname; }\
-			arg3 GetThirdArgument() { return a3##classname; }\
+			arg1 arg1##First() { return a1##classname; }\
+			arg2 arg2##Second() { return a2##classname; }\
+			arg3 arg3##Third() { return a3##classname; }\
 			classname##EventArgs(arg1 a1, arg2 a2, arg3 a3) {\
 				a1##classname = a1;\
 				a2##classname = a2;\

@@ -8,26 +8,37 @@
 #ifndef MPEPOLL
 #define MPEPOLL
 
-#include <base/platform/linux/dispatcher/SharedThreadState.h>
+#include <mutex>
+#include <queue>
 
-namespace base { namespace threading
-{
-   	class DispatcherTask;
+#include <base/threading/dispatcher/Dispatcher.h>
+#include <base/threading/dispatcher/DispatcherTypes.h>
+namespace platform {
+	struct SharedThreadState;
+}
 
-	class MessagePumpEPoll : public DispatcherMessagePump
-	{
-		public:
-			MessagePumpEPoll(const char* winIDExt) : DispatcherMessagePump(winIDExt) {}
-			void MakeMessagePump(bool isTaskRunner) override;
-			void MakeMessagePump(DispatcherTask* InitTask, bool isTaskRunner) override;
-			void StartMessageLoop(bool isTaskRunner) override;
-			void PostMessageToThread(const char* thread, DispatcherTask *task, bool isTaskRunner) override;
-			void RegisterMessageHandler(MessageReceiver* recv);
-		private:
-			static std::map<int, MessageReceiver*> handlers;
-			SharedThreadState* GetSharedState(bool isTaskRunner);
+namespace base { namespace threading {
+	using namespace platform;
+	class ConditionVariable;
+	class MessagePumpEPoll : public DispatcherMessagePump {
+	public:
+		MessagePumpEPoll(const char* winIDExt) : DispatcherMessagePump(winIDExt) {}
+		void MakeMessagePump(bool isTaskRunner) override;
+		void MakeMessagePump(Task* InitTask, bool isTaskRunner) override;
+		void StartMessageLoop(bool isTaskRunner) override;
+		void PostMessageToThread(const char* thread, Task* task, bool isTaskRunner) override;
+		void RegisterMessageFilter(MessageReceiver* recv) override;
 
+	private:
+		bool isATaskRunner;
+		platform::SharedThreadState* sts;
+		std::priority_queue<Task, std::vector<Task>, Task::PriorityComparer> taskQueue;
+		static std::map<int, MessageReceiver*> handlers;
+
+		void LockedPopTaskFromQueue();
+		void LockedPostTaskToQueue(Task* task);
+		platform::SharedThreadState* GetSharedState(bool isTaskRunner);
 	};
-}}
+}} // namespace base::threading
 
 #endif

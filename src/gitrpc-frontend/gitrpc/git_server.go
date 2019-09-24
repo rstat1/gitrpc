@@ -67,7 +67,7 @@ func (server *GitServer) GitHTTPHandler(resp http.ResponseWriter, request *http.
 			RepoName: repoName,
 			Storage:  s,
 		}
-
+		server.changeRepoState(server.CurrentRepo.RepoName, true)
 		if request.Method == "GET" {
 			server.getRequestHandler(request, resp, enc)
 		} else if request.Method == "POST" {
@@ -99,6 +99,10 @@ func (server *GitServer) listRefs(resp http.ResponseWriter, enc *pktline.Encoder
 func (server *GitServer) getRepoName(requestURL string) string {
 	urlParts := strings.Split(requestURL, "/")
 	return urlParts[2]
+}
+func (server *GitServer) changeRepoState(repoName string, open bool) {
+	_, err := server.rpc.ChangeRepositoryState(context.Background(), &nexus.RepoStateChangeRequest{RepoName: "new-server", NewRepoState: open}, grpc.FailFast(true))
+	common.LogError("", err)
 }
 
 // func (server *GitServer) decodeWantsAndHaves(details io.ReadCloser) ([]plumbing.Hash, []plumbing.Hash) {
@@ -155,8 +159,8 @@ func (server *GitServer) postRequestHandler(request *http.Request, resp http.Res
 	case "git-receive-pack":
 		common.LogDebug("pack size", request.Header.Get("Content-Length"), "hi")
 		server.packUpload(request.Body, enc)
-		request.Body.Close();
-		runtime.GC();
+		request.Body.Close()
+		runtime.GC()
 		// server.dataStore.UpdateProjectMRU(repoName)
 		break
 	}
@@ -183,6 +187,7 @@ func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) 
 			parsedRefNames = append(parsedRefNames, refName)
 			parsedRefs[refName] = lineParts[1]
 		}
+
 		if server.unbufferedWriteStream(reader, enc) == true {
 			server.writeReferences(enc, parsedRefNames, parsedRefs)
 		}
@@ -265,7 +270,9 @@ func (server *GitServer) unbufferedWriteStream(reader io.ReadCloser, enc *pktlin
 				}
 			}
 			wroteToStream = server.writeToStream(stream, pakToWrite, "new-server", enc, false)
-
+			if wroteToStream == false {
+				common.LogWarn("", "", "write to stream had a problem")
+			}
 		} else {
 			break
 		}
@@ -388,11 +395,13 @@ func (server *GitServer) writeReferences(enc *pktline.Encoder, parsedRefNames []
 		})
 		if common.LogError("", e2) != nil {
 			enc.Encode([]byte(fmt.Sprintf("ng %s %s\n", strings.TrimSuffix(ref, string([]byte{0})), e2.Error())))
+			server.changeRepoState(server.CurrentRepo.RepoName, false)
 			return false
 		} else {
 			enc.Encode([]byte(fmt.Sprintf("ok %s\n", strings.TrimSuffix(ref, string([]byte{0})))))
 		}
 	}
+	server.changeRepoState(server.CurrentRepo.RepoName, false)
 	return true
 }
 

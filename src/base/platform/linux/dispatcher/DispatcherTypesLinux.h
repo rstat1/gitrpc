@@ -11,18 +11,19 @@
 #include <base/common.h>
 
 #if !defined(OS_WIN)
-#include <map>
 #include <functional>
+#include <map>
 
-namespace base { namespace threading
-{
-	struct MessageReceiver
-    {
+namespace base { namespace threading {
+	struct MessageReceiver {
 		int filter;
 		std::function<void()> recvFunc;
-		MessageReceiver(int filter,  std::function<void()> func) { this->filter = filter; this->recvFunc = func; }
-    };
-}}
+		MessageReceiver(int filter, std::function<void()> func) {
+			this->filter = filter;
+			this->recvFunc = func;
+		}
+	};
+}} // namespace base::threading
 
 #endif
 #endif

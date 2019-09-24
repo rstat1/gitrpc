@@ -15,15 +15,15 @@ namespace base { namespace threading {
 	public:
 		TaskRunner();
 		void Start();
-		void RunTask(DispatcherTask *task);
-		void Init(const char *taskRunnerName, DispatcherTask *TaskRunnerInitMethod);
+		void RunTask(Task *task);
+		void Init(const char *taskRunnerName, Task *TaskRunnerInitMethod);
 		void *extra;
 		ThreadID Id;
 		DispatcherMessagePump *dmp;
 
 	private:
 		const char *runnerName;
-		DispatcherTask *initTask;
+		Task *initTask;
 	};
 }} // namespace base::threading
 

@@ -8,7 +8,6 @@
 #ifndef IPCCHAN
 #define IPCCHAN
 
-#include <base/base_exports.h>
 #include <base/ipc/PlatformPipe.h>
 #include <functional>
 #include <string>

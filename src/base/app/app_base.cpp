@@ -6,6 +6,9 @@
 */
 
 #include <base/app/app_base.h>
+#include <base/threading/common/TaskRunner.h>
+#include <base/threading/dispatcher/Dispatcher.h>
+#include <base/threading/dispatcher/DispatcherTypes.h>
 
 namespace base { namespace app {
 	void AppBase::InitAppBase() {

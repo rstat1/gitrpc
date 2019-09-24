@@ -8,8 +8,8 @@
 #ifndef RCVPAKSTRM
 #define RCVPAKSTRM
 
-#include <thread>
 #include <future>
+#include <thread>
 
 #include <base/Utils.h>
 #include <base/common.h>
@@ -19,37 +19,38 @@ namespace nexus { namespace git {
 	class GitRepo;
 	using namespace grpc;
 	class RecvPackStream {
+	public:
+		RecvPackStream(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) : svc(service), queue(cq) {}
+		void HandlerThread();
+		void StartHandlerThread();
+
+	private:
+		ServerCompletionQueue* queue;
+		nexus::GitService::AsyncService* svc;
+		std::unique_ptr<std::thread> requestHandler;
+		class Request {
 		public:
-			RecvPackStream(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) : svc(service), queue(cq) {}
-			void HandlerThread();
-			void StartHandlerThread();
+			Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
+			bool ProcessRequest(RequestStatus status);
+			void FinishRequest();
+			RequestStatus currentStatus;
+			~Request() { LOG_MSG("goodbye!") }
+
 		private:
+			void ReadMessage();
+			void WriteResponse();
+
+			std::string id;
+			bool repoOpen = false;
+			bool isRunning = true;
+			ServerContext context;
+			ReceivePackRequest msg;
 			ServerCompletionQueue* queue;
 			nexus::GitService::AsyncService* svc;
-			std::unique_ptr<std::thread> requestHandler;
-			class Request {
-				public:
-					Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
-					bool ProcessRequest(RequestStatus status);
-					void FinishRequest();
-					RequestStatus currentStatus;
-				private:
-					void ReadMessage();
-					void WriteResponse();
-
-					std::string id;
-					bool repoOpen = false;
-					bool isRunning = true;
-					ServerContext context;
-					ReceivePackRequest msg;
-					bool requestFailed = false;
-					const char* failureReason = "";
-					ServerCompletionQueue* queue;
-					nexus::GitService::AsyncService* svc;
-					gitrpc::common::CommonResponseInfo* resp;
-					std::unique_ptr<ServerAsyncReaderWriter<GenericResponse, ReceivePackRequest>> sarw;
-			};
+			gitrpc::common::CommonResponseInfo* resp;
+			std::unique_ptr<ServerAsyncReaderWriter<GenericResponse, ReceivePackRequest>> sarw;
+		};
 	};
-}}
+}} // namespace nexus::git
 
 #endif

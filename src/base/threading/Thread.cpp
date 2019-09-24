@@ -7,6 +7,7 @@
 
 #include <base/Utils.h>
 #include <base/threading/common/Thread.h>
+#include <base/threading/dispatcher/Dispatcher.h>
 #include <base/threading/dispatcher/DispatcherTypes.h>
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
 #include <base/platform/linux/dispatcher/SharedThreadState.h>
@@ -15,7 +16,7 @@
 using namespace base::utils;
 
 namespace base { namespace threading {
-	void Thread::Start(const char *name) {
+	void Thread::Start(const char* name) {
 #if defined(OS_WIN)
 		std::string threadWinName;
 		threadWinName = "ThreadDispatchWin-";
@@ -27,7 +28,7 @@ namespace base { namespace threading {
 		this->sts = new platform::SharedThreadState();
 		dmp = new MessagePumpEPoll(this->dispatchWinName);
 #endif
-		Dispatcher::Get()->AddNamedThread(this->dispatchWinName, this);
+		// Dispatcher::Get()->AddNamedThread(this->dispatchWinName, this);
 
 		ThreadID id = PlatformThread::Create(this, this->dispatchWinName);
 		if (id == NULL) {
@@ -40,11 +41,14 @@ namespace base { namespace threading {
 		NEW_TASK0(InitTask, Thread, this, Init);
 		dmp->MakeMessagePump(InitTask, false);
 	}
-	const char *Thread::GetThreadName() {
+	const char* Thread::GetThreadName() {
 		return this->dispatchWinName;
 	}
-	void Thread::PostTask(DispatcherTask *task) {
-		if (dmp == nullptr) { writeToLog("Message pump doesn't even exist. Weird."); }
+	void Thread::PostTask(Task* task) {
+		if (dmp == nullptr) {
+			writeToLog("Message pump doesn't even exist. Weird.");
+		}
 		dmp->PostMessageToThread(this->dispatchWinName, task, false);
 	}
+
 }} // namespace base::threading

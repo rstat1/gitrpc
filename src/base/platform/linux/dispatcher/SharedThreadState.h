@@ -9,22 +9,22 @@
 #define SHRDTHRDST
 
 #include <base/common.h>
+#include <mutex>
 
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
 #include <base/threading/common/ConditionVariable.h>
-
 using namespace base::threading;
 
-namespace platform
-{
-	struct SharedThreadState
-    {
-		pthread_mutex_t blockFDWrites;
-		ConditionVariable* blockUntilAHInit;
-		int epollFD;
+namespace platform {
+	struct SharedThreadState {
 		int fds[2];
-    };
-} /* platform */
+		int epollFD;
+		std::mutex queueGuard;
+		pthread_mutex_t blockFDWrites;
+		ConditionVariable* taskAvailable;
+		ConditionVariable* blockUntilAHInit;
+	};
+} // namespace platform
 
 #endif
 #endif

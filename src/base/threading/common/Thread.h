@@ -8,12 +8,11 @@
 #ifndef MSGLOOPTHRD
 #define MSGLOOPTHRD
 
-#include <base/base_exports.h>
 #include <base/threading/common/PlatformThread.h>
 #include <base/threading/dispatcher/MessagePump.h>
 
 namespace base { namespace threading {
-	class DispatcherTask;
+	class Task;
 #if defined(OS_WIN)
 	const DWORD MS_VC_EXCEPTION = 0x406D1388;
 	typedef struct tagTHREADNAME_INFO {
@@ -27,16 +26,16 @@ namespace base { namespace threading {
 	class BASEAPI Thread : public PlatformThread::Delegate {
 	public:
 		Thread() {}
-		Thread(const char *threadName) { this->dispatchWinName = threadName; }
-		void Start(const char *name) override;
-		void PostTask(DispatcherTask *task);
+		Thread(const char* threadName) { this->dispatchWinName = threadName; }
+		void Start(const char* name) override;
+		void PostTask(Task* task);
 		void ThreadMain() override;
-		const char *GetThreadName();
-		DispatcherMessagePump *dmp;
+		const char* GetThreadName();
+		DispatcherMessagePump* dmp;
 
 	protected:
 		virtual void Init() = 0;
-		const char *dispatchWinName;
+		const char* dispatchWinName;
 
 	private:
 	};

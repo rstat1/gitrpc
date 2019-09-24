@@ -1,0 +1,25 @@
+component("taskmanager") {
+	configs = [
+        "//build/config:common",
+        "//build/config:default_libs"
+    ]
+	defines = [
+        "BASE_EXPORTS"
+    ]
+	sources = [
+		"dispatcher/TaskManager.h",
+        "dispatcher/TaskManager.cpp",
+        "thread/Thread.cpp",
+        "thread/ThreadPool.cpp",
+		"thread/platform/common/PlatformThread.h",
+        "taskrunner/Runner.cpp"
+	]
+    if (is_linux) {
+        configs += [
+            "//build/config:linux_flags"
+        ]
+		sources += [
+			"thread/platform/linux/PlatformThreadPosix.cpp",
+		]
+    }
+}

@@ -1,0 +1,28 @@
+TabWidth: 4
+ColumnLimit: 0
+IndentWidth: 4
+UseTab: Always
+Standard: Cpp11
+IndentCaseLabels: true
+PointerAlignment: Left
+AccessModifierOffset: -4
+CompactNamespaces: true
+BreakBeforeBraces: Custom
+NamespaceIndentation: All
+SpaceBeforeInheritanceColon: true
+AllowShortBlocksOnASingleLine: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeCtorInitializerColon: true
+AlwaysBreakTemplateDeclarations: false
+SpaceBeforeRangeBasedForLoopColon: true
+IndentFunctionDeclarationAfterType: true
+AllowShortIfStatementsOnASingleLine: true
+BraceWrapping:
+    AfterEnum: false
+    AfterClass: false
+    BeforeElse: false
+    AfterUnion: false
+    AfterFunction: false
+    AfterNamespace: false
+    AfterExternBlock: false
+    AfterControlStatement: false

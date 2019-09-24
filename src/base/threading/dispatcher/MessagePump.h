@@ -8,7 +8,6 @@
 #ifndef MSGPMP
 #define MSGPMP
 
-#include <base/common.h>
 #include <base/threading/dispatcher/DispatcherMessagePump.h>
 
 #if defined(OS_WIN)

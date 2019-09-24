@@ -8,34 +8,35 @@
 #ifndef GITRPO
 #define GITRPO
 
-#include <string>
 #include <base/PropertyMacros.h>
 #include <common/GitServiceCommon.h>
+#include <string>
 
 #define DEFAULT_REPO_PATH "/home/rstat1/Apps/test/"
 
 namespace nexus { namespace git {
-    class GitRepo {
-		public:
-			GitRepo(std::string name);
-			~GitRepo();
-			const char* Open(bool bare);
-			const char* PackCommit(git_transfer_progress *stats);
-			const char* CreateReference(const char* refRev, const char* refName);
-			const char* PackAppend(const void *data, size_t size, git_transfer_progress *stats);
+	class GitRepo {
+	public:
+		GitRepo(std::string name);
+		~GitRepo();
+		const char* Open(bool bare);
+		const char* PackCommit(git_transfer_progress* stats);
+		const char* CreateReference(const char* refRev, const char* refName);
+		const char* PackAppend(const void* data, size_t size, git_transfer_progress* stats);
 
-            static int TransferProgressCB(const git_transfer_progress *stats, void *payload);
-		private:
-			const char* InitWritePackFunctions();
+		static int TransferProgressCB(const git_transfer_progress* stats, void* payload);
 
-            git_odb* odb;
-			std::string repoPath;
-			git_repository* repo;
-			git_odb_writepack* wp;
-			git_transfer_progress tStats;
+	private:
+		const char* InitWritePackFunctions();
+
+		git_odb* odb;
+		std::string repoPath;
+		git_repository* repo;
+		git_odb_writepack* wp;
+		git_transfer_progress tStats;
 
 		PROPERTY(Name, std::string);
 	};
-}}
+}} // namespace nexus::git
 
 #endif

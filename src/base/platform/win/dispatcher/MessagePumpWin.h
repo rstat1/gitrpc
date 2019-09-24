@@ -20,10 +20,10 @@ namespace base { namespace threading
 		public:
 			MessagePumpWin(const char* winIDExt) : DispatcherMessagePump(winIDExt) {}
 			void MakeMessagePump(bool isTaskRunner) override;
-			void MakeMessagePump(DispatcherTask* InitTask, bool isTaskRunner) override;
+			void MakeMessagePump(Task* InitTask, bool isTaskRunner) override;
 			void StartMessageLoop(bool isTaskRunner) override;
-			void PostMessageToThread(const char* thread, DispatcherTask *task, bool isTaskRunner) override;
-			void RegisterMessageHandler(MessageReceiver* recv) { this->handlers[recv->filter] = recv; }
+			void PostMessageToThread(const char* thread, Task *task, bool isTaskRunner) override;
+			void RegisterMessageHandler(MessageReceiver* recv) override { this->handlers[recv->filter] = recv; }
 			static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 		private:
   			ATOM wndClassATOM;

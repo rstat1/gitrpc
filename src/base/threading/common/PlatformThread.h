@@ -8,8 +8,6 @@
 #ifndef THREAD
 #define THREAD
 
-#include <base/base_exports.h>
-#include <base/common.h>
 #include <base/threading/common/thread_types.h>
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
 #include <base/platform/linux/dispatcher/SharedThreadState.h>
@@ -24,13 +22,13 @@ namespace base { namespace threading {
 	public:
 		class BASEAPI Delegate {
 		public:
-			virtual void Start(const char *name) = 0;
+			virtual void Start(const char* name) = 0;
 			virtual void ThreadMain() = 0;
 			ThreadID Id;
 #if defined(OS_LINUX) || defined(OS_STEAMLINK)
-			SharedThreadState *sts;
+			SharedThreadState* sts;
 #endif
-			void *extra;
+			void* extra;
 
 		protected:
 			virtual ~Delegate() {}
@@ -38,15 +36,15 @@ namespace base { namespace threading {
 		PlatformThread() {}
 		~PlatformThread() {}
 		PlatformThread(LPVOID param);
-		static ThreadID Create(Delegate *delegate, const char *name);
-		static void SetThreadName(const char *name);
+		static ThreadID Create(Delegate* delegate, const char* name);
+		static void SetThreadName(const char* name);
 		static ThreadID threadHandle;
 	};
 	struct ThreadStartInfo {
-		PlatformThread::Delegate *ThreadDelegate;
-		Dispatcher *DispatcherRef;
-		const char *threadName;
-		void *extra;
+		PlatformThread::Delegate* ThreadDelegate;
+		Dispatcher* DispatcherRef;
+		const char* threadName;
+		void* extra;
 	};
 }} // namespace base::threading
 

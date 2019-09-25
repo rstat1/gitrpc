@@ -5,41 +5,43 @@
 * found in the included LICENSE file.
 */
 
-#ifndef RECVPAK
-#define RECVPAK
+#ifndef LSTREFREQ
+#define LSTREFREQ
 
-#include <base/Utils.h>
-#include <base/common.h>
-#include <common/GitServiceCommon.h>
 #include <thread>
 
-#define STATUS_TAG(status) reinterpret_cast<void*>(RequestStatus::##status)
+#include <common/GitServiceCommon.h>
 
 namespace nexus { namespace git {
 	using namespace grpc;
-	class ReceivePack {
+	class ListRefRequests {
 	public:
-		ReceivePack(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) : svc(service), queue(cq) {}
+		ListRefRequests(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq) : svc(service), queue(cq) {}
 		void HandlerThread();
 		void StartHandlerThread();
 
 	private:
-		class Request {
-		public:
-			Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
-			bool ProcessRequest();
-
-		private:
-			RequestStatus status;
-			ServerContext context;
-			ServerCompletionQueue* queue;
-			nexus::ReceivePackRequest request;
-			nexus::GitService::AsyncService* svc;
-			std::unique_ptr<ServerAsyncResponseWriter<GenericResponse>> resp;
-		};
 		ServerCompletionQueue* queue;
 		nexus::GitService::AsyncService* svc;
 		std::unique_ptr<std::thread> requestHandler;
+		class Request {
+		public:
+			Request(nexus::GitService::AsyncService* service, ServerCompletionQueue* cq);
+			void ProcessRequest();
+			~Request(){LOG_MSG("goodbye!")}
+
+			RequestStatus status;
+
+		private:
+			void Read();
+			void Write();
+
+			ServerContext context;
+			ListRefsRequest request;
+			ServerCompletionQueue* queue;
+			nexus::GitService::AsyncService* svc;
+			std::unique_ptr<ServerAsyncResponseWriter<ListRefsResponse>> resp;
+		};
 	};
 }} // namespace nexus::git
 

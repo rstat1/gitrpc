@@ -68,7 +68,16 @@
 			"iomanip": "cpp",
 			"numeric": "cpp",
 			"future": "cpp",
-			"*.ipp": "cpp"
+			"*.ipp": "cpp",
+			"strstream": "cpp",
+			"bitset": "cpp",
+			"complex": "cpp",
+			"csignal": "cpp",
+			"iterator": "cpp",
+			"memory_resource": "cpp",
+			"random": "cpp",
+			"cfenv": "cpp",
+			"typeindex": "cpp"
 		}
 	}
 }

@@ -12,20 +12,22 @@
 #include <common/GitServiceCommon.h>
 
 #define HANDLER_DEF(name) void Handle##name(ServerCompletionQueue* queue)
-#define HANDLER(name) void GitServiceAsyncImpl::Handle##name(ServerCompletionQueue* queue) { (new name(gitService, queue))->StartHandlerThread(); }
+#define HANDLER(name) \
+	void GitServiceAsyncImpl::Handle##name(ServerCompletionQueue* queue) { (new name(gitService, queue))->StartHandlerThread(); }
 
 namespace nexus { namespace git {
 	using namespace grpc;
 	class GitServiceAsyncImpl {
-		public:
-			GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {}
-			HANDLER_DEF(ReceivePack);
-			HANDLER_DEF(WriteReference);
-			HANDLER_DEF(RecvPackStream);
-			HANDLER_DEF(RepoStateChange);
-		private:
-			GitService::AsyncService* gitService;
+	public:
+		GitServiceAsyncImpl(GitService::AsyncService* service) : gitService(service) {}
+		HANDLER_DEF(WriteReference);
+		HANDLER_DEF(RecvPackStream);
+		HANDLER_DEF(RepoStateChange);
+		HANDLER_DEF(ListRefRequests);
+
+	private:
+		GitService::AsyncService* gitService;
 	};
-}}
+}} // namespace nexus::git
 
 #endif

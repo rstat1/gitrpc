@@ -31,7 +31,7 @@ namespace nexus { namespace git {
 		int features = git_libgit2_features();
 		if ((git_libgit2_features() & GIT_FEATURE_THREADS) != 0) { LOG_MSG("thread support") }
 	}
-	Status GitServiceImpl::ListKnownRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response) {
+	Status GitServiceImpl::ListRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response) {
 		LOG_MSG("ListKnowRefs request")
 		REPO_PATH(request->reponame())
 
@@ -42,28 +42,28 @@ namespace nexus { namespace git {
 
 		return Status::OK;
 	}
-	Status GitServiceImpl::ListRefsForClone(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response) {
-		LOG_MSG("ListKnowRefsForClone request");
-		REPO_PATH(request->reponame())
+	// Status GitServiceImpl::ListRefsForClone(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response) {
+	// 	LOG_MSG("ListKnowRefsForClone request");
+	// 	REPO_PATH(request->reponame())
 
-		git_oid* hash;
-		git_repository* repo;
-		git_reference* headRef;
-		GitReference* head = new GitReference();
+	// 	git_oid* hash;
+	// 	git_repository* repo;
+	// 	git_reference* headRef;
+	// 	GitReference* head = new GitReference();
 
-		git_repository_open_bare(&repo, newRepoPath.c_str());
-		git_repository_head(&headRef, repo);
-		git_reference_foreach(repo, GitServiceImpl::GetRepoReferences, response);
-		git_reference_name_to_id(hash, repo, git_reference_name(headRef));
+	// 	git_repository_open_bare(&repo, newRepoPath.c_str());
+	// 	git_repository_head(&headRef, repo);
+	// 	git_reference_foreach(repo, GitServiceImpl::GetRepoReferences, response);
+	// 	git_reference_name_to_id(hash, repo, git_reference_name(headRef));
 
-		head->set_referencename("HEAD");
-		head->set_referencehash(reinterpret_cast<const char*>(hash->id));
+	// 	head->set_referencename("HEAD");
+	// 	head->set_referencehash(reinterpret_cast<const char*>(hash->id));
 
-		git_reference_free(headRef);
-		git_repository_free(repo);
+	// 	git_reference_free(headRef);
+	// 	git_repository_free(repo);
 
-		return Status::OK;
-	}
+	// 	return Status::OK;
+	// }
 	Status GitServiceImpl::UploadPack(ServerContext* context, const UploadPackRequest* request, UploadPackResponse* response) {
 		LOG_MSG("UploadPack request")
 

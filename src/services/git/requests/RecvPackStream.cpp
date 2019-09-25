@@ -10,12 +10,11 @@
 #include <base/Utils.h>
 
 #include <services/git/repository/GitRepo.h>
-#include <services/git/repository/RepositoryManager.h>
+#include <services/git/repository/RepoProxy.h>
 #include <services/git/requests/RecvPackStream.h>
 
 namespace nexus { namespace git {
 	using namespace gitrpc::git;
-	using namespace base::threading;
 	using namespace gitrpc::common;
 	void RecvPackStream::StartHandlerThread() {
 		requestHandler.reset(new std::thread(std::bind(&RecvPackStream::HandlerThread, this)));
@@ -84,12 +83,9 @@ namespace nexus { namespace git {
 				r.set_errormessage(resp->errorMessage);
 				r.set_success(resp->success);
 				sarw->WriteAndFinish(r, wopts, Status(StatusCode::INTERNAL, resp->errorMessage), reinterpret_cast<void*>(RequestStatus::FINISH));
-				// RepoProxy::Get()->CloseRepo();
 				repoOpen = false;
 				return;
 			}
-			// RepoProxy::Get()->CloseRepo();
-
 			sarw->WriteAndFinish(r, wopts, Status::OK, reinterpret_cast<void*>(RequestStatus::FINISH));
 			LOG_ARGS("finished request %s", id.c_str())
 			repoOpen = false;
@@ -109,18 +105,7 @@ namespace nexus { namespace git {
 		if (isRunning) {
 			sarw->Read(&msg, reinterpret_cast<void*>(RequestStatus::READ));
 			if (msg.data().size() > 0) {
-				// if (repoOpen == false) {
-				// auto openResult = RepoProxy::Get()->OpenRepo(msg.reponame());
-				// 	openResult.wait();
-				// 	err = openResult.get();
-				// 	if (err != "success") {
-				// 		LOG_REL_A("failed to open repo: %s", err.c_str())
-				// 		resp = Common::Response(err.c_str(), false, StatusCode::INTERNAL);
-				// 		return;
-				// 	} else {
 				repoOpen = true;
-				// 	}
-				// }
 				auto packAppendRet = RepoProxy::Get()->PackAppend(msg.data().data(), msg.data().size());
 				packAppendRet.wait();
 				err = packAppendRet.get();

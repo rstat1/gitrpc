@@ -5,7 +5,7 @@
 * found in the included LICENSE file.
 */
 
-#include <services/git/repository/RepositoryManager.h>
+#include <services/git/repository/RepoProxy.h>
 #include <services/git/requests/RepoStateChange.h>
 
 namespace nexus { namespace git {

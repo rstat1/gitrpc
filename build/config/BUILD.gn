@@ -745,10 +745,8 @@ config("c++14") {
 
 config("c++17") {
   if (!is_win) {
-    if (is_clang && clang_version >= 50000) {
+    if (is_clang) {
       cflags_cc = [ "-std=c++17" ]
-    } else {
-      cflags_cc = [ "-std=c++1z" ]
     }
   } else if (is_clang || msc_full_ver >= 191125506) {
     cflags_cc = [ "/std:c++17" ]
@@ -760,7 +758,7 @@ config("c++17") {
 
 config("c++latest") {
   if (!is_win) {
-    cflags_cc = [ "-std=c++1z" ]
+    cflags_cc = [ "-std=c++2a" ]
   } else if (is_clang || msc_full_ver >= 190024210) {
     cflags_cc = [ "/std:c++latest" ]
   }

@@ -12,13 +12,13 @@
 
 #include <base/common.h>
 
-#define THREAD_CHECK(name) assert(Dispatcher::Get()->IsCorrectThread(name) == true);
-#define POST_TASK(task, threadName) Dispatcher::Get()->PostTask(threadName, task)
-#define RANKED_TASK0(Name, Type, Ref, Func, TPriority) Task* Name = \
-														   Task::Create<Type, &Type::Func>(Ref, TPriority)
+#define THREAD_CHECK(name) assert(base::threading::Dispatcher::Get()->IsCorrectThread(name) == true);
+#define POST_TASK(task, threadName) base::threading::Dispatcher::Get()->PostTask(threadName, task)
+#define RANKED_TASK0(Name, Type, Ref, Func, TPriority) base::threading::Task* Name = \
+														   base::threading::Task::Create<Type, &Type::Func>(Ref, TPriority)
 
-#define RANKED_TASK1(Name, Type, Ref, Func, TPriority, Args) Task* Name = \
-																 Task::Create<Type, &Type::Func>(Ref, Args, TPriority)
+#define RANKED_TASK1(Name, Type, Ref, Func, TPriority, Args) base::threading::Task* Name = \
+																 base::threading::Task::Create<Type, &Type::Func>(Ref, Args, TPriority)
 
 #define NEW_TASK0(Name, TaskType, TaskTypeRef, Function) RANKED_TASK0(Name, TaskType, TaskTypeRef, Function, TaskPriority::LOW)
 #define NEW_TASK1(Name, TaskType, TaskTypeRef, Function, Args) RANKED_TASK1(Name, TaskType, TaskTypeRef, Function, TaskPriority::LOW, Args)

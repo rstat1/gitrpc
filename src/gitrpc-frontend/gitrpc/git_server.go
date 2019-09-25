@@ -24,6 +24,10 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/filesystem"
 )
 
+const (
+	testRepoPath = "/home/rstat1/Apps/test/new-server"
+)
+
 var (
 	logger *log.Logger
 )
@@ -59,7 +63,7 @@ func (server *GitServer) GitHTTPHandler(resp http.ResponseWriter, request *http.
 	repoName := server.getRepoName(request.URL.Path)
 	if repoName != "" {
 		enc := pktline.NewEncoder(resp)
-		s, e := filesystem.NewStorage(osfs.New("/home/rstat1/Apps/test/new-server"))
+		s, e := filesystem.NewStorage(osfs.New(testRepoPath))
 		if e != nil {
 			panic(e)
 		}
@@ -76,9 +80,40 @@ func (server *GitServer) GitHTTPHandler(resp http.ResponseWriter, request *http.
 	}
 	return common.APIResponse{}
 }
+func (server *GitServer) getRequestHandler(request *http.Request, resp http.ResponseWriter, enc *pktline.Encoder) {
+	serviceName := request.URL.Query().Get("service")
+	resp.Header().Add("Content-Type", fmt.Sprintf("application/x-%s-advertisement", serviceName))
+	resp.WriteHeader(200)
 
+	enc.Encode([]byte(fmt.Sprintf("# service=%s\n", serviceName)))
+	enc.Encode(nil)
+
+	common.LogDebug("", "", serviceName)
+	switch serviceName {
+	case "git-upload-pack":
+		server.listRefsForClone(resp, enc)
+		break
+	case "git-receive-pack":
+		server.listRefs(resp, enc)
+		break
+	}
+}
+func (server *GitServer) postRequestHandler(request *http.Request, resp http.ResponseWriter, enc *pktline.Encoder, repoName string) {
+	arr := strings.Split(request.URL.Path, "/")
+	switch arr[3] {
+	case "git-upload-pack":
+		server.clone(resp, request.Body, enc)
+		break
+	case "git-receive-pack":
+		server.packUpload(request.Body, enc)
+		request.Body.Close()
+		runtime.GC()
+		// server.dataStore.UpdateProjectMRU(repoName)
+		break
+	}
+}
 func (server *GitServer) listRefs(resp http.ResponseWriter, enc *pktline.Encoder) {
-	if repo, err := git.PlainOpen("/home/rstat1/Apps/test/new-server"); err == nil {
+	if repo, err := git.PlainOpen(testRepoPath); err == nil {
 		refList := packp.NewAdvRefs()
 		refList.Capabilities.Add(capability.OFSDelta)
 		refList.Capabilities.Add(capability.DeleteRefs)
@@ -104,68 +139,60 @@ func (server *GitServer) changeRepoState(repoName string, open bool) {
 	_, err := server.rpc.ChangeRepositoryState(context.Background(), &nexus.RepoStateChangeRequest{RepoName: "new-server", NewRepoState: open}, grpc.FailFast(true))
 	common.LogError("", err)
 }
+func (server *GitServer) listRefsForClone(resp http.ResponseWriter, enc *pktline.Encoder) {
+	
+	// var haveHead bool = false
+	// var headCapsResp []byte
+	// if repo, err := git.PlainOpen(testRepoPath); err == nil {
+	// 	rev, _ := repo.Head()
+	// 	refs, _ := repo.References()
+	// 	if rev != nil {
+	// 		headCapsResp = append([]byte(fmt.Sprintf("%s %s", rev.Hash().String(), "HEAD")), '\x00')
+	// 		headCapsResp = append(headCapsResp, []byte(fmt.Sprintf("multi_ack shallow no-progress include-tag multi_ack_detailed no-done symref=HEAD:%s agent=devapp/0.0.2", rev.Name().String()))...)
+	// 		haveHead = true
+	// 	}
+	// 	if haveHead == true {
+	// 		enc.Encode(append(headCapsResp, 10))
+	// 	}
+	// 	err = refs.ForEach(func(ref *plumbing.Reference) error {
+	// 		if ref.Name().String() != "HEAD" {
+	// 			enc.Encode([]byte(fmt.Sprintf("%s %s\n", ref.Hash().String(), ref.Name().String()))) //, '\x00')
+	// 		}
+	// 		return nil
+	// 	})
+	// }
+	// enc.Encode(nil)
 
-// func (server *GitServer) decodeWantsAndHaves(details io.ReadCloser) ([]plumbing.Hash, []plumbing.Hash) {
-// 	var line []byte
-// 	var lineParts []string
-// 	var wants, haves []plumbing.Hash
+}
+func (server *GitServer) decodeWantsAndHaves(details io.ReadCloser) ([]plumbing.Hash, []plumbing.Hash) {
+	var line []byte
+	var lineParts []string
+	var wants, haves []plumbing.Hash
 
-// 	decode := pktline.NewDecoder(details)
+	decode := pktline.NewDecoder(details)
 
-// 	for {
-// 		if err := decode.Decode(&line); err != nil {
-// 			return wants, haves
-// 		} else if len(line) == 0 {
-// 			continue
-// 		} else {
-// 			line = line[:len(line)-1]
-// 		}
-// 		lineParts = strings.Split(string(line), " ")
+	for {
+		if err := decode.Decode(&line); err != nil {
+			return wants, haves
+		} else if len(line) == 0 {
+			continue
+		} else {
+			line = line[:len(line)-1]
+		}
+		lineParts = strings.Split(string(line), " ")
 
-// 		if lineParts[0] == "want" {
-// 			println(fmt.Sprintf("want %s\n", string(line)))
-// 			wants = append(wants, plumbing.NewHash(lineParts[1]))
-// 		} else if lineParts[0] == "have" {
-// 			println(fmt.Sprintf("have %s", string(line)))
-// 			haves = append(haves, plumbing.NewHash(lineParts[1]))
-// 		}
-// 	}
-// 	return nil, nil
-// }
-func (server *GitServer) getRequestHandler(request *http.Request, resp http.ResponseWriter, enc *pktline.Encoder) {
-	serviceName := request.URL.Query().Get("service")
-	resp.Header().Add("Content-Type", fmt.Sprintf("application/x-%s-advertisement", serviceName))
-	resp.WriteHeader(200)
-
-	enc.Encode([]byte(fmt.Sprintf("# service=%s\n", serviceName)))
-	enc.Encode(nil)
-
-	common.LogDebug("", "", serviceName)
-	switch serviceName {
-	// case "git-upload-pack":
-	// 		server.listRefsForClone(resp, enc)
-	// 		break
-	case "git-receive-pack":
-		server.listRefs(resp, enc)
-		break
+		if lineParts[0] == "want" {
+			println(fmt.Sprintf("want %s\n", string(line)))
+			wants = append(wants, plumbing.NewHash(lineParts[1]))
+		} else if lineParts[0] == "have" {
+			println(fmt.Sprintf("have %s", string(line)))
+			haves = append(haves, plumbing.NewHash(lineParts[1]))
+		}
 	}
 }
-func (server *GitServer) postRequestHandler(request *http.Request, resp http.ResponseWriter, enc *pktline.Encoder, repoName string) {
-	arr := strings.Split(request.URL.Path, "/")
-	switch arr[3] {
-	case "git-upload-pack":
+func (server *GitServer) clone(resp http.ResponseWriter, details io.ReadCloser, enc *pktline.Encoder) {
 
-		break
-	case "git-receive-pack":
-		common.LogDebug("pack size", request.Header.Get("Content-Length"), "hi")
-		server.packUpload(request.Body, enc)
-		request.Body.Close()
-		runtime.GC()
-		// server.dataStore.UpdateProjectMRU(repoName)
-		break
-	}
 }
-
 func (server *GitServer) packUpload(reader io.ReadCloser, enc *pktline.Encoder) {
 	var lines [][]byte
 	var lineStr string

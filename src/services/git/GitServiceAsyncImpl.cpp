@@ -8,7 +8,7 @@
 #include <thread>
 
 #include <services/git/GitServiceAsyncImpl.h>
-#include <services/git/requests/ReceivePack.h>
+#include <services/git/requests/ListRefRequests.h>
 #include <services/git/requests/RecvPackStream.h>
 #include <services/git/requests/RepoStateChange.h>
 #include <services/git/requests/WriteReference.h>
@@ -17,4 +17,5 @@ namespace nexus { namespace git {
 	HANDLER(WriteReference)
 	HANDLER(RecvPackStream)
 	HANDLER(RepoStateChange)
+	HANDLER(ListRefRequests)
 }} // namespace nexus::git

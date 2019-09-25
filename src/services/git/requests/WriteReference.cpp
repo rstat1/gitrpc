@@ -10,7 +10,7 @@
 #include <base/threading/dispatcher/DispatcherTypes.h>
 
 #include <services/git/repository/GitRepo.h>
-#include <services/git/repository/RepositoryManager.h>
+#include <services/git/repository/RepoProxy.h>
 #include <services/git/requests/WriteReference.h>
 
 namespace nexus { namespace git {
@@ -47,13 +47,10 @@ namespace nexus { namespace git {
 			new Request(svc, queue);
 			Read();
 			status = RequestStatus::FINISH;
-			// resp->Finish(r, Status(StatusCode::OK, "Success"), this);
-			// 	Read();
 		} else {
 			LOG_MSG("finish")
 			GPR_ASSERT(status == RequestStatus::FINISH);
 			delete this;
-			// 	status = RequestStatus::FINISH;
 		}
 		return true;
 	}
@@ -63,14 +60,6 @@ namespace nexus { namespace git {
 		std::string err;
 		git_oid objectID;
 		std::future<std::string> result;
-		// result = RepoProxy::Get()->OpenRepo(request.reponame());
-		// result.wait();
-		// err = result.get();
-		// if (err != "success") {
-		// 	RepoProxy::Get()->CloseRepo();
-		// 	Write(err.c_str());
-		// 	return;
-		// }
 		result = RepoProxy::Get()->CreateReference(request.refname(), request.refrev());
 		result.wait();
 		err = result.get();
@@ -80,7 +69,6 @@ namespace nexus { namespace git {
 			Write(err.c_str());
 			return;
 		}
-		// RepoProxy::Get()->CloseRepo();
 		Write("Success");
 	}
 	void WriteReference::Request::Write(const char* msg) {

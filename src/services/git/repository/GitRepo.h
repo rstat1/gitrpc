@@ -8,11 +8,18 @@
 #ifndef GITRPO
 #define GITRPO
 
+#include <string>
+#include <vector>
+
 #include <base/PropertyMacros.h>
 #include <common/GitServiceCommon.h>
-#include <string>
 
 #define DEFAULT_REPO_PATH "/home/rstat1/Apps/test/"
+
+namespace gitrpc { namespace git {
+	struct ReferenceInfo;
+	struct GetRefsResponse;
+}} // namespace gitrpc::git
 
 namespace nexus { namespace git {
 	class GitRepo {
@@ -20,6 +27,8 @@ namespace nexus { namespace git {
 		GitRepo(std::string name);
 		~GitRepo();
 		const char* Open(bool bare);
+		const char* CreateNewPackBuilder();
+		gitrpc::git::GetRefsResponse GetRepoReferences();
 		const char* PackCommit(git_transfer_progress* stats);
 		const char* CreateReference(const char* refRev, const char* refName);
 		const char* PackAppend(const void* data, size_t size, git_transfer_progress* stats);

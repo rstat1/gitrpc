@@ -21,8 +21,8 @@ namespace nexus { namespace git {
 	class GitServiceImpl : public GitService::Service {
 	public:
 		void InitGitService();
-		Status ListKnownRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
-		Status ListRefsForClone(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
+		Status ListRefs(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
+		// Status ListRefsForClone(ServerContext* context, const ListRefsRequest* request, ListRefsResponse* response);
 		Status UploadPack(ServerContext* context, const UploadPackRequest* request, UploadPackResponse* response);
 		Status InitRepository(ServerContext* context, const InitRepositoryRequest* request, GenericResponse* response);
 		Status WriteReference(ServerContext* context, const WriteReferenceRequest* request, GenericResponse* response);

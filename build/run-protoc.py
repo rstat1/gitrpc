@@ -15,8 +15,8 @@ def FindAndLaunchProtoc():
         print "Please download and compile the Protobuf compiler (protoc) and put in your PATH"
         exit(1)
     else:
-        version = protoCPath.replace('\n', "")
-        subprocess.check_call(version + " --version", shell=True)
+        # version = protoCPath.replace('\n', "")
+        # subprocess.check_call(version + " --version", shell=True)
         GenerateFiles(protoCPath.replace('\n', ""))
 
 def GenerateFiles(path):

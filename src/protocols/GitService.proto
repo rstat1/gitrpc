@@ -4,13 +4,10 @@ package nexus;
 //option optimize_for = LITE_RUNTIME;
 
 service GitService {
+    rpc ListRefs(ListRefsRequest) returns (ListRefsResponse) {}
     rpc ChangeRepositoryState(RepoStateChangeRequest) returns (GenericResponse) {}
     rpc InitRepository(InitRepositoryRequest) returns (GenericResponse) {}
-    rpc ListKnownRefs(ListRefsRequest) returns (ListRefsResponse) {}
-    rpc ListRefsForClone(ListRefsRequest) returns (ListRefsResponse) {}
-    rpc UploadPack(UploadPackRequest) returns (UploadPackResponse) {}
     rpc WriteReference(WriteReferenceRequest) returns (GenericResponse) {}
-    rpc ReceivePack(ReceivePackRequest) returns (GenericResponse) {}
     rpc ReceivePackStream (stream ReceivePackRequest) returns (stream GenericResponse) {}
     rpc UploadPackStream(UploadPackRequest) returns (stream UploadPackResponse) {}
 }
@@ -35,11 +32,11 @@ message ReceivePackRequest {
 }
 message ListRefsRequest {
     string repoName = 1;
+    bool forClone = 2;
 }
 message ListRefsResponse {
     repeated GitReference refs = 1;
-    bool success = 2;
-    string errorMessage = 3;
+    GitReference head = 2;
 }
 message InitRepositoryRequest {
     string repoName = 1;
